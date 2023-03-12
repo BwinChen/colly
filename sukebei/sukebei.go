@@ -71,7 +71,14 @@ func ParseInfo(div *colly.HTMLElement) {
 
 func Save(r *colly.Response) {
 	if strings.Contains(r.Request.URL.String(), ".torrent") {
-		if err := r.Save(fmt.Sprintf("./torrents/%s.torrent", r.Ctx.Get("InfoHash"))); err != nil {
+		n := time.Now()
+		f := fmt.Sprintf("./torrents/%d/%d/%d", n.Year(), n.Month(), n.Day())
+		if err := os.MkdirAll(f, 0777); err != nil {
+			log.Println(err)
+			return
+		}
+		f += fmt.Sprintf("/%s.torrent", r.Ctx.Get("InfoHash"))
+		if err := r.Save(f); err != nil {
 			log.Println(err)
 		}
 	}
@@ -84,8 +91,7 @@ func Deadline(duration string) int64 {
 		log.Fatal(err)
 	}
 	n = n.Add(d)
-	t2 := n.Unix()
-	return t2
+	return n.Unix()
 }
 
-var deadline = Deadline("-14h")
+var deadline = Deadline("-12h")
