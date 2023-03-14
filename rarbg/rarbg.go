@@ -10,7 +10,7 @@ import (
 )
 
 var URL = "https://rarbgprx.org/torrents.php?page=1"
-var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; tcc; skt=iupm6xlpqa; skt=iupm6xlpqa; expla=2"
+var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; tcc; skt=iupm6xlpqa; skt=iupm6xlpqa"
 
 // 差7个时区
 var deadline = util.Deadline("-19h")
@@ -31,7 +31,6 @@ func ParseList(b *colly.HTMLElement) {
 					// 早于截止时间，停止爬取
 					os.Exit(0)
 				}
-				// 详情页
 				err = td.Request.Visit(h)
 				if err != nil {
 					return
@@ -40,7 +39,6 @@ func ParseList(b *colly.HTMLElement) {
 		})
 	})
 	b.ForEach("div#pager_links > a", func(_ int, a *colly.HTMLElement) {
-		// 翻页
 		if err := a.Request.Visit(a.Attr("href")); err != nil {
 			return
 		}
@@ -67,7 +65,6 @@ func ParseInfo(b *colly.HTMLElement) {
 							s := strings.Index(attr.Val, "btih:")
 							e := strings.Index(attr.Val, "&dn=")
 							td.Request.Ctx.Put("InfoHash", attr.Val[s+5:e])
-							// 下载种子
 							if err := td.Request.Visit(h); err != nil {
 								return
 							}
@@ -84,7 +81,7 @@ func ParseInfo(b *colly.HTMLElement) {
 				if i == 0 {
 					continue
 				}
-				fmt.Println("file:", tr.FirstChild.LastChild.Data)
+				fmt.Println("file:", strings.Trim(tr.FirstChild.LastChild.Data, " "))
 				fmt.Println("size:", tr.LastChild.FirstChild.Data)
 			}
 		}

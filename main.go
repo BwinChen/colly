@@ -1,7 +1,7 @@
 package main
 
 import (
-	"colly/rarbg"
+	"colly/sukebei"
 	"colly/util"
 	"fmt"
 	"github.com/gocolly/colly/v2"
@@ -10,7 +10,6 @@ import (
 )
 
 func main() {
-	// Instantiate default collector
 	c := colly.NewCollector()
 
 	// 代理
@@ -22,23 +21,23 @@ func main() {
 
 	// 拦截
 	c.OnRequest(func(r *colly.Request) {
-		r.Headers.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "+
-			"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.69")
-		r.Headers.Set("Cookie", rarbg.Cookie)
+		r.Headers.Set("User-Agent", util.UserAgent)
+		r.Headers.Set("Cookie", sukebei.Cookie)
 		fmt.Println("Visiting:", r.URL)
 	})
 
-	// 保存文件
+	// 下载
 	c.OnResponse(util.Save)
 
 	// 详情
-	c.OnHTML("body", rarbg.ParseInfo)
+	c.OnHTML("body", sukebei.ParseInfo)
 
 	// 列表
-	c.OnHTML("body", rarbg.ParseList)
+	c.OnHTML("body", sukebei.ParseList)
 
 	// 入口
-	if err := c.Visit(rarbg.URL); err != nil {
+	err = c.Visit(sukebei.URL)
+	if err != nil {
 		log.Fatal(err)
 	}
 }
