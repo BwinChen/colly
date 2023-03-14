@@ -1,7 +1,8 @@
 package main
 
 import (
-	"colly/sukebei"
+	"colly/rarbg"
+	"colly/util"
 	"fmt"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/proxy"
@@ -21,20 +22,23 @@ func main() {
 
 	// 拦截
 	c.OnRequest(func(r *colly.Request) {
+		r.Headers.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "+
+			"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.69")
+		r.Headers.Set("Cookie", rarbg.Cookie)
 		fmt.Println("Visiting:", r.URL)
 	})
 
 	// 保存文件
-	c.OnResponse(sukebei.Save)
+	c.OnResponse(util.Save)
 
 	// 详情
-	c.OnHTML("body", sukebei.ParseInfo)
+	c.OnHTML("body", rarbg.ParseInfo)
 
 	// 列表
-	c.OnHTML("body", sukebei.ParseList)
+	c.OnHTML("body", rarbg.ParseList)
 
 	// 入口
-	if err := c.Visit("https://sukebei.nyaa.si/?p=1"); err != nil {
+	if err := c.Visit(rarbg.URL); err != nil {
 		log.Fatal(err)
 	}
 }
