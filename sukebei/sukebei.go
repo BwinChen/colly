@@ -2,7 +2,6 @@ package sukebei
 
 import (
 	"colly/util"
-	"fmt"
 	"github.com/gocolly/colly/v2"
 	"log"
 	"os"
@@ -51,17 +50,17 @@ func ParseList(b *colly.HTMLElement) {
 func ParseInfo(b *colly.HTMLElement) {
 	b.ForEach("h3", func(i int, h3 *colly.HTMLElement) {
 		if i == 0 {
-			fmt.Println("title:", strings.Trim(h3.Text, "\n\t"))
+			log.Println("title:", strings.Trim(h3.Text, "\n\t"))
 		}
 	})
 	var infoHash string
 	b.ForEach("div.col-md-1", func(i int, div *colly.HTMLElement) {
 		if strings.Contains(div.Text, "File size:") {
-			fmt.Println("size:", div.DOM.Siblings().Get(0).FirstChild.Data)
+			log.Println("size:", div.DOM.Next().Text())
 		}
 		if strings.Contains(div.Text, "Info hash:") {
-			infoHash = div.DOM.Siblings().Get(0).FirstChild.FirstChild.Data
-			fmt.Println("infoHash:", infoHash)
+			infoHash = div.DOM.Next().Text()
+			log.Println("infoHash:", infoHash)
 		}
 	})
 	b.ForEach("div.panel-footer > a", func(i int, a *colly.HTMLElement) {
@@ -72,10 +71,11 @@ func ParseInfo(b *colly.HTMLElement) {
 			}
 		}
 		if i == 1 {
-			fmt.Println("magnet:", a.Attr("href"))
+			log.Println("magnet:", a.Attr("href"))
 		}
 	})
 	b.ForEach(".torrent-file-list i.fa-file", func(_ int, i *colly.HTMLElement) {
-		fmt.Println("file:", i.DOM.Parent().Text())
+		log.Println("file:", i.DOM.Get(0).NextSibling.Data)
+		log.Println("size:", strings.Trim(i.DOM.Next().Text(), "()"))
 	})
 }

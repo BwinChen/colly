@@ -2,14 +2,16 @@ package rarbg
 
 import (
 	"colly/util"
-	"fmt"
 	"github.com/gocolly/colly/v2"
+	"log"
 	"os"
 	"strings"
 	"time"
 )
 
 var URL = "https://rarbgprx.org/torrents.php?page=1"
+
+// Cookie 绕过验证码
 var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; tcc; skt=iupm6xlpqa; skt=iupm6xlpqa"
 
 // 差7个时区
@@ -49,40 +51,38 @@ func ParseInfo(b *colly.HTMLElement) {
 	b.ForEach("table.lista-rounded td.header2[align='right']", func(_ int, td *colly.HTMLElement) {
 		if strings.Contains(td.Text, "Torrent:") {
 			var h string
-			for i, a := range td.DOM.Siblings().Find("a").Nodes {
-				if i == 0 {
-					fmt.Println("title:", a.FirstChild.Data)
-					for _, attr := range a.Attr {
-						if attr.Key == "href" {
-							h = attr.Val
-						}
-					}
+			a := td.DOM.Next().Children().Get(1)
+			log.Println("title:", a.FirstChild.Data)
+			for _, attr := range a.Attr {
+				if attr.Key == "href" {
+					h = attr.Val
 				}
-				if i == 1 {
-					for _, attr := range a.Attr {
-						if attr.Key == "href" {
-							fmt.Println("magnet:", attr.Val)
-							s := strings.Index(attr.Val, "btih:")
-							e := strings.Index(attr.Val, "&dn=")
-							td.Request.Ctx.Put("InfoHash", attr.Val[s+5:e])
-							if err := td.Request.Visit(h); err != nil {
-								return
-							}
-						}
-					}
+			}
+			a = td.DOM.Next().Children().Get(2)
+			for _, attr := range a.Attr {
+				if attr.Key == "href" {
+					log.Println("magnet:", attr.Val)
+					s := strings.Index(attr.Val, "btih:")
+					e := strings.Index(attr.Val, "&dn=")
+					td.Request.Ctx.Put("InfoHash", attr.Val[s+5:e])
+					// 每小时只能下载30个种子
+					//if err := td.Request.Visit(h); err != nil {
+					//	return
+					//}
+					log.Println("torrent:", td.Request.AbsoluteURL(h))
 				}
 			}
 		}
 		if strings.Contains(td.Text, "Size:") {
-			fmt.Println("size:", td.DOM.Siblings().Text())
+			log.Println("size:", td.DOM.Next().Text())
 		}
 		if strings.Contains(td.Text, "Show Files »") {
-			for i, tr := range td.DOM.Siblings().Find("tr").Nodes {
+			for i, tr := range td.DOM.Next().Find("tr").Nodes {
 				if i == 0 {
 					continue
 				}
-				fmt.Println("file:", strings.Trim(tr.FirstChild.LastChild.Data, " "))
-				fmt.Println("size:", tr.LastChild.FirstChild.Data)
+				log.Println("file:", strings.TrimSpace(tr.FirstChild.LastChild.Data))
+				log.Println("size:", tr.LastChild.FirstChild.Data)
 			}
 		}
 	})
