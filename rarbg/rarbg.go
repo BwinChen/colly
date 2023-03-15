@@ -1,6 +1,7 @@
 package rarbg
 
 import (
+	"colly/es"
 	"colly/util"
 	"github.com/gocolly/colly/v2"
 	"log"
@@ -48,11 +49,12 @@ func ParseList(b *colly.HTMLElement) {
 }
 
 func ParseInfo(b *colly.HTMLElement) {
+	m := es.Magnet{}
 	b.ForEach("table.lista-rounded td.header2[align='right']", func(_ int, td *colly.HTMLElement) {
 		if strings.Contains(td.Text, "Torrent:") {
 			var h string
 			a := td.DOM.Next().Children().Get(1)
-			log.Println("title:", a.FirstChild.Data)
+			m.Name = a.FirstChild.Data
 			for _, attr := range a.Attr {
 				if attr.Key == "href" {
 					h = attr.Val
@@ -61,29 +63,36 @@ func ParseInfo(b *colly.HTMLElement) {
 			a = td.DOM.Next().Children().Get(2)
 			for _, attr := range a.Attr {
 				if attr.Key == "href" {
-					log.Println("magnet:", attr.Val)
 					s := strings.Index(attr.Val, "btih:")
 					e := strings.Index(attr.Val, "&dn=")
-					td.Request.Ctx.Put("InfoHash", attr.Val[s+5:e])
+					//td.Request.Ctx.Put("InfoHash", attr.Val[s+5:e])
 					// 每小时只能下载30个种子
 					//if err := td.Request.Visit(h); err != nil {
 					//	return
 					//}
-					log.Println("torrent:", td.Request.AbsoluteURL(h))
+					m.Magnet = attr.Val
+					m.InfoHash = attr.Val[s+5 : e]
+					m.Torrent = td.Request.AbsoluteURL(h)
 				}
 			}
 		}
 		if strings.Contains(td.Text, "Size:") {
-			log.Println("size:", td.DOM.Next().Text())
+			m.Size = td.DOM.Next().Text()
 		}
 		if strings.Contains(td.Text, "Show Files »") {
 			for i, tr := range td.DOM.Next().Find("tr").Nodes {
 				if i == 0 {
 					continue
 				}
-				log.Println("file:", strings.TrimSpace(tr.FirstChild.LastChild.Data))
-				log.Println("size:", tr.LastChild.FirstChild.Data)
+				f := es.File{}
+				f.Name = strings.TrimSpace(tr.FirstChild.LastChild.Data)
+				f.Size = tr.LastChild.FirstChild.Data
+				m.Files = append(m.Files, f)
 			}
 		}
 	})
+	if m.InfoHash != "" {
+		log.Println("magnet:", m)
+		es.IndexRequest(m)
+	}
 }

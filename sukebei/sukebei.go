@@ -1,6 +1,7 @@
 package sukebei
 
 import (
+	"colly/es"
 	"colly/util"
 	"github.com/gocolly/colly/v2"
 	"log"
@@ -48,34 +49,43 @@ func ParseList(b *colly.HTMLElement) {
 }
 
 func ParseInfo(b *colly.HTMLElement) {
+	m := es.Magnet{}
 	b.ForEach("h3", func(i int, h3 *colly.HTMLElement) {
 		if i == 0 {
-			log.Println("title:", strings.Trim(h3.Text, "\n\t"))
+			m.Name = strings.Trim(h3.Text, "\n\t")
 		}
 	})
 	var infoHash string
 	b.ForEach("div.col-md-1", func(i int, div *colly.HTMLElement) {
 		if strings.Contains(div.Text, "File size:") {
-			log.Println("size:", div.DOM.Next().Text())
+			m.Size = div.DOM.Next().Text()
 		}
 		if strings.Contains(div.Text, "Info hash:") {
 			infoHash = div.DOM.Next().Text()
-			log.Println("infoHash:", infoHash)
+			m.InfoHash = infoHash
 		}
 	})
 	b.ForEach("div.panel-footer > a", func(i int, a *colly.HTMLElement) {
+		h := a.Attr("href")
 		if i == 0 {
+			m.Torrent = a.Request.AbsoluteURL(h)
 			a.Request.Ctx.Put("InfoHash", infoHash)
-			if err := a.Request.Visit(a.Attr("href")); err != nil {
+			if err := a.Request.Visit(h); err != nil {
 				log.Println(err)
 			}
 		}
 		if i == 1 {
-			log.Println("magnet:", a.Attr("href"))
+			m.Magnet = h
 		}
 	})
 	b.ForEach(".torrent-file-list i.fa-file", func(_ int, i *colly.HTMLElement) {
-		log.Println("file:", i.DOM.Get(0).NextSibling.Data)
-		log.Println("size:", strings.Trim(i.DOM.Next().Text(), "()"))
+		f := es.File{}
+		f.Name = i.DOM.Get(0).NextSibling.Data
+		f.Size = strings.Trim(i.DOM.Next().Text(), "()")
+		m.Files = append(m.Files, f)
 	})
+	if m.InfoHash != "" {
+		log.Println(m)
+		es.IndexRequest(m)
+	}
 }
