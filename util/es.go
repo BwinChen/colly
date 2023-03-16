@@ -1,4 +1,4 @@
-package es
+package util
 
 import (
 	"bytes"
@@ -15,9 +15,7 @@ var c *elasticsearch.Client
 func init() {
 	log.SetFlags(0)
 	// Initialize a client with the default settings.
-	//
 	// An `ELASTICSEARCH_URL` environment variable will be used when exported.
-	//
 	es, err := elasticsearch.NewDefaultClient()
 	if err != nil {
 		log.Fatalf("Error creating the client: %s", err)
@@ -25,8 +23,8 @@ func init() {
 	c = es
 
 	// 1. Get cluster info
-	//
-	res, err := c.Info()
+	var res *esapi.Response
+	res, err = c.Info()
 	if err != nil {
 		log.Fatalf("Error getting response: %s", err)
 	}
@@ -36,32 +34,34 @@ func init() {
 		log.Fatalf("Error: %s", res.String())
 	}
 	// Deserialize the response into a map.
-	var r map[string]interface{}
-	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+	var m map[string]interface{}
+	err = json.NewDecoder(res.Body).Decode(&m)
+	if err != nil {
 		log.Fatalf("Error parsing the response body: %s", err)
 	}
 	// Print client and server version numbers.
 	log.Printf("Client: %s", elasticsearch.Version)
-	log.Printf("Server: %s", r["version"].(map[string]interface{})["number"])
+	log.Printf("Server: %s", m["version"].(map[string]interface{})["number"])
 }
 
-func IndexRequest(magnet Magnet) {
+func IndexRequest(m Magnet) {
 	// Build the request body.
-	data, err := json.Marshal(magnet)
+	data, err := json.Marshal(m)
 	if err != nil {
 		log.Fatalf("Error marshaling document: %s", err)
 	}
 
 	// Set up the request object.
 	req := esapi.IndexRequest{
-		Index: "magnet",
-		//DocumentID: strconv.Itoa(1),
-		Body:    bytes.NewReader(data),
-		Refresh: "true",
+		Index:      "magnet",
+		DocumentID: Checksum(m.InfoHash),
+		Body:       bytes.NewReader(data),
+		Refresh:    "true",
 	}
 
 	// Perform the request with the client.
-	res, err := req.Do(context.Background(), c)
+	var res *esapi.Response
+	res, err = req.Do(context.Background(), c)
 	if err != nil {
 		log.Fatalf("Error getting response: %s", err)
 	}
@@ -72,7 +72,8 @@ func IndexRequest(magnet Magnet) {
 	} else {
 		// Deserialize the response into a map.
 		var r map[string]interface{}
-		if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		err = json.NewDecoder(res.Body).Decode(&r)
+		if err != nil {
 			log.Printf("Error parsing the response body: %s", err)
 		} else {
 			// Print the response status and indexed document version.
@@ -89,14 +90,14 @@ func closeBody(b io.ReadCloser) {
 
 type File struct {
 	Name string
-	Size string
+	Size int64
 }
 
 type Magnet struct {
 	Name     string
 	InfoHash string
 	Magnet   string
-	Size     string
+	Size     int64
 	Torrent  string
 	Files    []File
 }

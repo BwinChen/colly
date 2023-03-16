@@ -1,7 +1,6 @@
 package rarbg
 
 import (
-	"colly/es"
 	"colly/util"
 	"github.com/gocolly/colly/v2"
 	"log"
@@ -13,7 +12,7 @@ import (
 var URL = "https://rarbgprx.org/torrents.php?page=1"
 
 // Cookie 绕过验证码
-var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; tcc; skt=iupm6xlpqa; skt=iupm6xlpqa"
+var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; skt=9w7fzyk0xw; skt=9w7fzyk0xw; expla=1; tcc"
 
 // 差7个时区
 var deadline = util.Deadline("-19h")
@@ -24,14 +23,13 @@ func ParseList(b *colly.HTMLElement) {
 		tr.ForEach("td.lista", func(i int, td *colly.HTMLElement) {
 			if i == 1 {
 				h = td.ChildAttr("a", "href")
-			}
-			if i == 2 {
+			} else if i == 2 {
 				t, err := time.ParseInLocation("2006-01-02 15:04:05", td.Text, time.Local)
 				if err != nil {
 					return
 				}
 				if t.Unix() < deadline {
-					// 早于截止时间，停止爬取
+					log.Println("已到截止时间，爬取完成")
 					os.Exit(0)
 				}
 				err = td.Request.Visit(h)
@@ -49,7 +47,7 @@ func ParseList(b *colly.HTMLElement) {
 }
 
 func ParseInfo(b *colly.HTMLElement) {
-	m := es.Magnet{}
+	m := util.Magnet{}
 	b.ForEach("table.lista-rounded td.header2[align='right']", func(_ int, td *colly.HTMLElement) {
 		if strings.Contains(td.Text, "Torrent:") {
 			var h string
@@ -58,41 +56,39 @@ func ParseInfo(b *colly.HTMLElement) {
 			for _, attr := range a.Attr {
 				if attr.Key == "href" {
 					h = attr.Val
+					break
 				}
 			}
 			a = td.DOM.Next().Children().Get(2)
 			for _, attr := range a.Attr {
 				if attr.Key == "href" {
-					s := strings.Index(attr.Val, "btih:")
-					e := strings.Index(attr.Val, "&dn=")
-					//td.Request.Ctx.Put("InfoHash", attr.Val[s+5:e])
-					// 每小时只能下载30个种子
+					m.Magnet = attr.Val
+					m.InfoHash = attr.Val[strings.Index(attr.Val, "btih:")+5 : strings.Index(attr.Val, "&dn=")]
+					m.Torrent = td.Request.AbsoluteURL(h)
+					//每小时只能下载30个种子
+					//td.Request.Ctx.Put("InfoHash", m.InfoHash)
 					//if err := td.Request.Visit(h); err != nil {
 					//	return
 					//}
-					m.Magnet = attr.Val
-					m.InfoHash = attr.Val[s+5 : e]
-					m.Torrent = td.Request.AbsoluteURL(h)
+					break
 				}
 			}
-		}
-		if strings.Contains(td.Text, "Size:") {
-			m.Size = td.DOM.Next().Text()
-		}
-		if strings.Contains(td.Text, "Show Files »") {
+		} else if strings.Contains(td.Text, "Size:") {
+			m.Size, _ = util.ConvertSize(td.DOM.Next().Text())
+		} else if strings.Contains(td.Text, "Show Files »") {
 			for i, tr := range td.DOM.Next().Find("tr").Nodes {
 				if i == 0 {
 					continue
 				}
-				f := es.File{}
+				f := util.File{}
 				f.Name = strings.TrimSpace(tr.FirstChild.LastChild.Data)
-				f.Size = tr.LastChild.FirstChild.Data
+				f.Size, _ = util.ConvertSize(tr.LastChild.FirstChild.Data)
 				m.Files = append(m.Files, f)
 			}
 		}
 	})
 	if m.InfoHash != "" {
 		log.Println("magnet:", m)
-		es.IndexRequest(m)
+		util.IndexRequest(m)
 	}
 }
