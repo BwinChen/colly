@@ -59,3 +59,7 @@ func ConvertSize(s string) (int64, error) {
 		return int64(f * 1024 * 1024 * 1024 * 1024), nil
 	}
 }
+
+func InfoHash(magnet string) string {
+	return magnet[strings.Index(magnet, "btih:")+5 : strings.Index(magnet, "&dn=")]
+}

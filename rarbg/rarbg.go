@@ -12,7 +12,7 @@ import (
 var URL = "https://rarbgprx.org/torrents.php?page=1"
 
 // Cookie 绕过验证码
-var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; skt=9w7fzyk0xw; skt=9w7fzyk0xw; expla=1; tcc"
+var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; skt=qz6kh97yrx; skt=qz6kh97yrx; expla=1; tcc"
 
 // 差7个时区
 var deadline = util.Deadline("-19h")
@@ -31,6 +31,10 @@ func ParseList(b *colly.HTMLElement) {
 				if t.Unix() < deadline {
 					log.Println("已到截止时间，爬取完成")
 					os.Exit(0)
+				}
+				if util.Search(util.Checksum(td.Request.AbsoluteURL(h))) > 0 {
+					// URL去重
+					return
 				}
 				err = td.Request.Visit(h)
 				if err != nil {
@@ -63,10 +67,9 @@ func ParseInfo(b *colly.HTMLElement) {
 			for _, attr := range a.Attr {
 				if attr.Key == "href" {
 					m.Magnet = attr.Val
-					m.InfoHash = attr.Val[strings.Index(attr.Val, "btih:")+5 : strings.Index(attr.Val, "&dn=")]
 					m.Torrent = td.Request.AbsoluteURL(h)
 					//每小时只能下载30个种子
-					//td.Request.Ctx.Put("InfoHash", m.InfoHash)
+					//td.Request.Ctx.Put("InfoHash", util.InfoHash(attr.Val))
 					//if err := td.Request.Visit(h); err != nil {
 					//	return
 					//}
@@ -87,7 +90,8 @@ func ParseInfo(b *colly.HTMLElement) {
 			}
 		}
 	})
-	if m.InfoHash != "" {
+	if m.Magnet != "" {
+		m.URL = util.Checksum(b.Request.URL.String())
 		log.Println("magnet:", m)
 		util.IndexRequest(m)
 	}

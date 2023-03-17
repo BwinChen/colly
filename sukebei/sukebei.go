@@ -29,6 +29,10 @@ func ParseList(b *colly.HTMLElement) {
 					// 早于截止时间，停止爬取
 					os.Exit(0)
 				}
+				if util.Search(util.Checksum(td.Request.AbsoluteURL(h))) > 0 {
+					// URL去重
+					return
+				}
 				err = td.Request.Visit(h)
 				if err != nil {
 					log.Println(err)
@@ -59,7 +63,6 @@ func ParseInfo(b *colly.HTMLElement) {
 			m.Size, _ = util.ConvertSize(div.DOM.Next().Text())
 		} else if strings.Contains(div.Text, "Info hash:") {
 			infoHash = div.DOM.Next().Text()
-			m.InfoHash = infoHash
 		}
 	})
 	b.ForEach("div.panel-footer > a", func(i int, a *colly.HTMLElement) {
@@ -80,7 +83,8 @@ func ParseInfo(b *colly.HTMLElement) {
 		f.Size, _ = util.ConvertSize(strings.Trim(i.DOM.Next().Text(), "()"))
 		m.Files = append(m.Files, f)
 	})
-	if m.InfoHash != "" {
+	if m.Magnet != "" {
+		m.URL = util.Checksum(b.Request.URL.String())
 		log.Println(m)
 		util.IndexRequest(m)
 	}

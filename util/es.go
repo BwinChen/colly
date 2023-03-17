@@ -54,7 +54,7 @@ func IndexRequest(m Magnet) {
 	// Set up the request object.
 	req := esapi.IndexRequest{
 		Index:      "magnet",
-		DocumentID: Checksum(m.InfoHash),
+		DocumentID: Checksum(InfoHash(m.Magnet)),
 		Body:       bytes.NewReader(data),
 		Refresh:    "true",
 	}
@@ -82,6 +82,71 @@ func IndexRequest(m Magnet) {
 	}
 }
 
+func Search(URL string) int {
+	// 3. Search for the indexed documents
+	// Build the request body.
+	var buf bytes.Buffer
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"match": map[string]interface{}{
+				"URL": URL,
+			},
+		},
+		"_source": []string{
+			"URL",
+		},
+	}
+	err := json.NewEncoder(&buf).Encode(query)
+	if err != nil {
+		log.Fatalf("Error encoding query: %s", err)
+	}
+
+	// Perform the search request.
+	var res *esapi.Response
+	res, err = c.Search(
+		c.Search.WithContext(context.Background()),
+		c.Search.WithIndex("magnet"),
+		c.Search.WithBody(&buf),
+		c.Search.WithTrackTotalHits(true),
+		c.Search.WithPretty(),
+	)
+	if err != nil {
+		log.Fatalf("Error getting response: %s", err)
+	}
+	defer closeBody(res.Body)
+
+	var r map[string]interface{}
+	if res.IsError() {
+		err = json.NewDecoder(res.Body).Decode(&r)
+		if err != nil {
+			log.Fatalf("Error parsing the response body: %s", err)
+		} else {
+			// Print the response status and error information.
+			log.Fatalf("[%s] %s: %s",
+				res.Status(),
+				r["error"].(map[string]interface{})["type"],
+				r["error"].(map[string]interface{})["reason"],
+			)
+		}
+	}
+
+	err = json.NewDecoder(res.Body).Decode(&r)
+	if err != nil {
+		log.Fatalf("Error parsing the response body: %s", err)
+	}
+	// Print the response status, number of results, and request duration.
+	i := int(r["hits"].(map[string]interface{})["total"].(map[string]interface{})["value"].(float64))
+	log.Printf(
+		"[%s] %d hits; took: %dms",
+		res.Status(), i, int(r["took"].(float64)),
+	)
+	// Print the ID and document source for each hit.
+	//for _, hit := range r["hits"].(map[string]interface{})["hits"].([]interface{}) {
+	//	log.Printf(" * ID=%s, %s", hit.(map[string]interface{})["_id"], hit.(map[string]interface{})["_source"])
+	//}
+	return i
+}
+
 func closeBody(b io.ReadCloser) {
 	if err := b.Close(); err != nil {
 		log.Println(err)
@@ -94,10 +159,10 @@ type File struct {
 }
 
 type Magnet struct {
-	Name     string
-	InfoHash string
-	Magnet   string
-	Size     int64
-	Torrent  string
-	Files    []File
+	Name    string
+	URL     string
+	Magnet  string
+	Size    int64
+	Torrent string
+	Files   []File
 }
