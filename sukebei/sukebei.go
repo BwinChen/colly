@@ -23,10 +23,11 @@ func ParseList(b *colly.HTMLElement) {
 				t := td.Attr("data-timestamp")
 				t1, err := strconv.ParseInt(t, 10, 64)
 				if err != nil {
+					log.Println(err)
 					return
 				}
 				if deadline > t1 {
-					// 早于截止时间，停止爬取
+					log.Println("已到截止时间，爬取完成")
 					os.Exit(0)
 				}
 				if util.Search(util.Checksum(td.Request.AbsoluteURL(h))) > 0 {
@@ -85,7 +86,7 @@ func ParseInfo(b *colly.HTMLElement) {
 	})
 	if m.Magnet != "" {
 		m.URL = util.Checksum(b.Request.URL.String())
-		log.Println(m)
+		//log.Println(m)
 		util.IndexRequest(m)
 	}
 }

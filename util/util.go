@@ -45,6 +45,7 @@ func ConvertSize(s string) (int64, error) {
 	ss := strings.Split(s, " ")
 	f, err := strconv.ParseFloat(ss[0], 64)
 	if err != nil {
+		log.Println(err)
 		return 0, errors.New("文件大小转换错误")
 	}
 	if ss[1] == "bytes" || ss[1] == "b" {
