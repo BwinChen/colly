@@ -7,9 +7,10 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
-var deadline = util.Deadline("-12h")
+var deadline = util.Deadline("-24h")
 var URL = "https://sukebei.nyaa.si/?p=1"
 var Cookie = ""
 
@@ -64,6 +65,14 @@ func ParseInfo(b *colly.HTMLElement) {
 			m.Size, _ = util.ConvertSize(div.DOM.Next().Text())
 		} else if strings.Contains(div.Text, "Info hash:") {
 			infoHash = div.DOM.Next().Text()
+		} else if strings.Contains(div.Text, "Date:") {
+			ts, _ := div.DOM.Next().Attr("data-timestamp")
+			sec, err := strconv.ParseInt(ts, 10, 64)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			m.AddedTime = time.Unix(sec, 0).Format("2006-01-02 15:04:05")
 		}
 	})
 	b.ForEach("div.panel-footer > a", func(i int, a *colly.HTMLElement) {
@@ -71,9 +80,9 @@ func ParseInfo(b *colly.HTMLElement) {
 		if i == 0 {
 			m.Torrent = a.Request.AbsoluteURL(h)
 			a.Request.Ctx.Put("InfoHash", infoHash)
-			if err := a.Request.Visit(h); err != nil {
-				log.Println(err)
-			}
+			//if err := a.Request.Visit(h); err != nil {
+			//	log.Println(err)
+			//}
 		} else if i == 1 {
 			m.Magnet = h
 		}

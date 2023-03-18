@@ -2,20 +2,24 @@ package rarbg
 
 import (
 	"colly/util"
+	"fmt"
 	"github.com/gocolly/colly/v2"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
 
-var URL = "https://rarbgprx.org/torrents.php?page=1"
+var page = 147
+
+var URL = fmt.Sprintf("https://rarbgprx.org/torrents.php?page=%d", page)
 
 // Cookie 绕过验证码
-var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; skt=qz6kh97yrx; skt=qz6kh97yrx; expla=1; tcc"
+var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; PPA_CI=0f45a09025ab85c86b27d8bbbca13a39; skt=x9cm7bo5iy; skt=x9cm7bo5iy; tcc; expla=1"
 
 // 差7个时区
-var deadline = util.Deadline("-31h")
+var deadline = util.Deadline(fmt.Sprintf("-%dh", 7+24*365))
 
 func ParseList(b *colly.HTMLElement) {
 	b.ForEach("tr.lista2", func(_ int, tr *colly.HTMLElement) {
@@ -45,13 +49,23 @@ func ParseList(b *colly.HTMLElement) {
 		})
 	})
 	b.ForEach("div#pager_links > a", func(_ int, a *colly.HTMLElement) {
-		if err := a.Request.Visit(a.Attr("href")); err != nil {
+		h := a.Attr("href")
+		p, err := strconv.Atoi(strings.Split(h, "page=")[1])
+		if err != nil || p < page {
+			//防止重复爬取
+			return
+		}
+		err = a.Request.Visit(h)
+		if err != nil {
 			log.Println(err)
 		}
 	})
 }
 
 func ParseInfo(b *colly.HTMLElement) {
+	if strings.Contains(b.Text, "too many requests from your ip") {
+		log.Fatal("ip被封")
+	}
 	m := util.Magnet{}
 	b.ForEach("table.lista-rounded td.header2[align='right']", func(_ int, td *colly.HTMLElement) {
 		if strings.Contains(td.Text, "Torrent:") {
@@ -89,6 +103,8 @@ func ParseInfo(b *colly.HTMLElement) {
 				f.Size, _ = util.ConvertSize(tr.LastChild.FirstChild.Data)
 				m.Files = append(m.Files, f)
 			}
+		} else if strings.Contains(td.Text, "Added:") {
+			m.AddedTime = td.DOM.Next().Text()
 		}
 	})
 	if m.Magnet != "" {

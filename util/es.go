@@ -159,10 +159,11 @@ type File struct {
 }
 
 type Magnet struct {
-	Name    string
-	URL     string
-	Magnet  string
-	Size    int64
-	Torrent string
-	Files   []File
+	Name      string
+	URL       string
+	AddedTime string
+	Magnet    string
+	Size      int64
+	Torrent   string
+	Files     []File
 }
