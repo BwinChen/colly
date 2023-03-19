@@ -2,6 +2,7 @@ package sukebei
 
 import (
 	"colly/util"
+	"fmt"
 	"github.com/gocolly/colly/v2"
 	"log"
 	"os"
@@ -10,8 +11,9 @@ import (
 	"time"
 )
 
-var deadline = util.Deadline("-24h")
-var URL = "https://sukebei.nyaa.si/?p=1"
+var deadline = util.Deadline(fmt.Sprintf("-%dh", 24*365))
+var page = 1
+var URL = fmt.Sprintf("https://sukebei.nyaa.si/?p=%d", page)
 var Cookie = ""
 
 func ParseList(b *colly.HTMLElement) {
@@ -45,10 +47,33 @@ func ParseList(b *colly.HTMLElement) {
 	b.ForEach("ul.pagination a", func(_ int, a *colly.HTMLElement) {
 		h := a.Attr("href")
 		if h != "#" {
-			if err := a.Request.Visit(h); err != nil {
+			p, err := strconv.Atoi(strings.Split(h, "p=")[1])
+			if err != nil || p < page {
+				//防止重复爬取
+				return
+			}
+			err = a.Request.Visit(h)
+			if err != nil {
 				log.Println(err)
 			}
 		}
+	})
+}
+
+func ParseView(b *colly.HTMLElement) {
+	b.ForEachWithBreak("ul.pagination a", func(_ int, a *colly.HTMLElement) bool {
+		//1919904
+		for v := 3839925; v > 1919904; v-- {
+			h := fmt.Sprintf("https://sukebei.nyaa.si/view/%d", v)
+			if util.Search(util.Checksum(h)) > 0 {
+				// URL去重
+				continue
+			}
+			if err := b.Request.Visit(h); err != nil {
+				log.Println(err)
+			}
+		}
+		return false
 	})
 }
 
