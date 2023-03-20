@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-// 165
-var page = 1
+// 219
+var page = 28
 
 var URL = fmt.Sprintf("https://rarbgprx.org/torrents.php?page=%d", page)
 
