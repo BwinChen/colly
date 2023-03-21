@@ -1,7 +1,7 @@
 package main
 
 import (
-	"colly/btsow"
+	"colly/sukebei"
 	"colly/util"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/proxy"
@@ -21,7 +21,7 @@ func main() {
 	// 拦截
 	c.OnRequest(func(r *colly.Request) {
 		r.Headers.Set("User-Agent", util.UserAgent)
-		r.Headers.Set("Cookie", btsow.Cookie)
+		r.Headers.Set("Cookie", sukebei.Cookie)
 		log.Println("Visiting:", r.URL)
 	})
 
@@ -29,13 +29,13 @@ func main() {
 	c.OnResponse(util.Save)
 
 	// 详情
-	c.OnHTML("body", btsow.ParseInfo)
+	c.OnHTML("body", sukebei.ParseInfo)
 
 	// 列表
-	c.OnHTML("body", btsow.ParseList)
+	c.OnHTML("body", sukebei.ParseList)
 
 	// 入口
-	err = c.Visit(btsow.URL)
+	err = c.Visit(sukebei.URL)
 	if err != nil {
 		log.Fatal(err)
 	}

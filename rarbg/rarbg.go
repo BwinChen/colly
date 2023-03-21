@@ -11,13 +11,13 @@ import (
 	"time"
 )
 
-// 219
-var page = 28
+// 109
+var page = 1
 
 var URL = fmt.Sprintf("https://rarbgprx.org/torrents.php?page=%d", page)
 
 // Cookie 绕过验证码
-var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; skt=59psgj90pg; skt=59psgj90pg; expla=1; tcc"
+var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; skt=5r7ghge4wo; skt=5r7ghge4wo; tcc"
 
 // 差7个时区
 var deadline = util.Deadline(fmt.Sprintf("-%dh", 7+24*365))

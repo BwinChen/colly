@@ -16,7 +16,12 @@ func init() {
 	log.SetFlags(0)
 	// Initialize a client with the default settings.
 	// An `ELASTICSEARCH_URL` environment variable will be used when exported.
-	es, err := elasticsearch.NewDefaultClient()
+	cfg := elasticsearch.Config{
+		Addresses: []string{
+			"http://192.168.1.9:9200",
+		},
+	}
+	es, err := elasticsearch.NewClient(cfg)
 	if err != nil {
 		log.Fatalf("Error creating the client: %s", err)
 	}

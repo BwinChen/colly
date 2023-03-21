@@ -17,19 +17,44 @@ var URL = fmt.Sprintf("https://sukebei.nyaa.si/?p=%d", page)
 var Cookie = ""
 
 func ParseList(b *colly.HTMLElement) {
-	b.ForEach("tr", func(_ int, tr *colly.HTMLElement) {
+	b.ForEach("tr", func(i int, tr *colly.HTMLElement) {
 		var h string
-		tr.ForEach("td", func(i int, td *colly.HTMLElement) {
-			if i == 1 {
+		tr.ForEach("td", func(j int, td *colly.HTMLElement) {
+			if j == 1 {
 				h = td.ChildAttr("a", "href")
-			} else if i == 4 {
-				t := td.Attr("data-timestamp")
-				t1, err := strconv.ParseInt(t, 10, 64)
+				p, err := strconv.Atoi(strings.Split(td.Request.URL.String(), "p=")[1])
 				if err != nil {
 					log.Println(err)
 					return
 				}
-				if deadline > t1 {
+				if p == 100 && i == 75 {
+					var v int
+					v, err = strconv.Atoi(h[strings.Index(h, "view/")+5:])
+					if err != nil {
+						log.Println(err)
+						return
+					}
+					//爬取100页之后
+					for i := v; i > 1919904; i-- {
+						v := fmt.Sprintf("https://sukebei.nyaa.si/view/%d", i)
+						if util.Search(util.Checksum(v)) > 0 {
+							// URL去重
+							continue
+						}
+						err = td.Request.Visit(v)
+						if err != nil {
+							log.Println(err)
+						}
+					}
+				}
+			} else if j == 4 {
+				ts := td.Attr("data-timestamp")
+				t, err := strconv.ParseInt(ts, 10, 64)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				if deadline > t {
 					log.Println("已到截止时间，爬取完成")
 					os.Exit(0)
 				}
@@ -49,7 +74,7 @@ func ParseList(b *colly.HTMLElement) {
 		if h != "#" {
 			p, err := strconv.Atoi(strings.Split(h, "p=")[1])
 			if err != nil || p < page {
-				//防止重复爬取
+				//防止跳到首页
 				return
 			}
 			err = a.Request.Visit(h)
@@ -57,23 +82,6 @@ func ParseList(b *colly.HTMLElement) {
 				log.Println(err)
 			}
 		}
-	})
-}
-
-func ParseView(b *colly.HTMLElement) {
-	b.ForEachWithBreak("ul.pagination a", func(_ int, a *colly.HTMLElement) bool {
-		//1919904
-		for v := 3839925; v > 1919904; v-- {
-			h := fmt.Sprintf("https://sukebei.nyaa.si/view/%d", v)
-			if util.Search(util.Checksum(h)) > 0 {
-				// URL去重
-				continue
-			}
-			if err := b.Request.Visit(h); err != nil {
-				log.Println(err)
-			}
-		}
-		return false
 	})
 }
 
@@ -85,7 +93,7 @@ func ParseInfo(b *colly.HTMLElement) {
 		}
 	})
 	var infoHash string
-	b.ForEach("div.col-md-1", func(i int, div *colly.HTMLElement) {
+	b.ForEach("div.col-md-1", func(_ int, div *colly.HTMLElement) {
 		if strings.Contains(div.Text, "File size:") {
 			m.Size, _ = util.ConvertSize(div.DOM.Next().Text())
 		} else if strings.Contains(div.Text, "Info hash:") {
