@@ -35,13 +35,13 @@ func ParseList(b *colly.HTMLElement) {
 						return
 					}
 					//爬取100页之后
-					for i := v; i > 1919904; i-- {
-						v := fmt.Sprintf("https://sukebei.nyaa.si/view/%d", i)
-						if util.Search(util.Checksum(v)) > 0 {
+					for k := v; k > 1919904; k-- {
+						vk := fmt.Sprintf("https://sukebei.nyaa.si/view/%d", k)
+						if util.Search(util.Checksum(vk)) > 0 {
 							// URL去重
 							continue
 						}
-						err = td.Request.Visit(v)
+						err = td.Request.Visit(vk)
 						if err != nil {
 							log.Println(err)
 						}
