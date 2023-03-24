@@ -48,8 +48,7 @@ func ParseList(b *colly.HTMLElement) {
 					}
 				}
 			} else if j == 4 {
-				ts := td.Attr("data-timestamp")
-				t, err := strconv.ParseInt(ts, 10, 64)
+				t, err := strconv.ParseInt(td.Attr("data-timestamp"), 10, 64)
 				if err != nil {
 					log.Println(err)
 					return
