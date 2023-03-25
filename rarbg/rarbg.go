@@ -11,13 +11,11 @@ import (
 	"time"
 )
 
-// 109
+// 307
 var page = 1
 
-var URL = fmt.Sprintf("https://rarbgprx.org/torrents.php?page=%d", page)
-
 // Cookie 绕过验证码
-var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; skt=5r7ghge4wo; skt=5r7ghge4wo; tcc"
+var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; skt=qiot8eqkhp; skt=qiot8eqkhp; expla=1; tcc"
 
 // 差7个时区
 var deadline = util.Deadline(fmt.Sprintf("-%dh", 7+24*365))
@@ -53,7 +51,7 @@ func ParseList(b *colly.HTMLElement) {
 		h := a.Attr("href")
 		p, err := strconv.Atoi(strings.Split(h, "page=")[1])
 		if err != nil || p < page {
-			//防止重复爬取
+			//防止跳回首页
 			return
 		}
 		err = a.Request.Visit(h)
@@ -112,5 +110,11 @@ func ParseInfo(b *colly.HTMLElement) {
 		m.URL = util.Checksum(b.Request.URL.String())
 		//log.Println(m)
 		util.IndexRequest(m)
+	}
+}
+
+func VisitPages(c *colly.Collector) {
+	if err := c.Visit(fmt.Sprintf("https://rarbgprx.org/torrents.php?page=%d", page)); err != nil {
+		log.Fatal(err)
 	}
 }

@@ -13,7 +13,6 @@ import (
 
 var deadline = util.Deadline(fmt.Sprintf("-%dh", 24*365))
 var page = 1
-var URL = fmt.Sprintf("https://sukebei.nyaa.si/?p=%d", page)
 var Cookie = ""
 
 func ParseList(b *colly.HTMLElement) {
@@ -22,31 +21,11 @@ func ParseList(b *colly.HTMLElement) {
 		tr.ForEach("td", func(j int, td *colly.HTMLElement) {
 			if j == 1 {
 				h = td.ChildAttr("a", "href")
-				p, err := strconv.Atoi(strings.Split(td.Request.URL.String(), "p=")[1])
-				if err != nil {
-					log.Println(err)
-					return
-				}
-				if p == 100 && i == 75 {
-					var v int
-					v, err = strconv.Atoi(h[strings.Index(h, "view/")+5:])
-					if err != nil {
-						log.Println(err)
-						return
-					}
-					//爬取100页之后
-					for k := v; k > 1919904; k-- {
-						vk := fmt.Sprintf("https://sukebei.nyaa.si/view/%d", k)
-						if util.Search(util.Checksum(vk)) > 0 {
-							// URL去重
-							continue
-						}
-						err = td.Request.Visit(vk)
-						if err != nil {
-							log.Println(err)
-						}
-					}
-				}
+				//err := view(i, h, td)
+				//if err != nil {
+				//	log.Println(err)
+				//	return
+				//}
 			} else if j == 4 {
 				t, err := strconv.ParseInt(td.Attr("data-timestamp"), 10, 64)
 				if err != nil {
@@ -73,7 +52,7 @@ func ParseList(b *colly.HTMLElement) {
 		if h != "#" {
 			p, err := strconv.Atoi(strings.Split(h, "p=")[1])
 			if err != nil || p < page {
-				//防止跳到首页
+				//防止跳回首页
 				return
 			}
 			err = a.Request.Visit(h)
@@ -130,4 +109,52 @@ func ParseInfo(b *colly.HTMLElement) {
 		//log.Println(m)
 		util.IndexRequest(m)
 	}
+}
+
+func VisitPages(c *colly.Collector) {
+	if err := c.Visit(fmt.Sprintf("https://sukebei.nyaa.si/?p=%d", page)); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func VisitViews(c *colly.Collector) {
+	//3770000 -> 3750000
+	//3750000 -> 3700000
+	for i := 3750000; i > 3700000; i-- {
+		v := fmt.Sprintf("https://sukebei.nyaa.si/view/%d", i)
+		if util.Search(util.Checksum(v)) > 0 {
+			// URL去重
+			continue
+		}
+		if err := c.Visit(v); err != nil {
+			log.Println(err)
+		}
+	}
+}
+
+func view(i int, h string, td *colly.HTMLElement) error {
+	p, err := strconv.Atoi(strings.Split(td.Request.URL.String(), "p=")[1])
+	if err != nil {
+		return err
+	}
+	if p == 100 && i == 75 {
+		var v int
+		v, err = strconv.Atoi(h[strings.Index(h, "view/")+5:])
+		if err != nil {
+			return err
+		}
+		//爬取100页之后
+		for k := v; k > 1919904; k-- {
+			vk := fmt.Sprintf("https://sukebei.nyaa.si/view/%d", k)
+			if util.Search(util.Checksum(vk)) > 0 {
+				// URL去重
+				continue
+			}
+			err = td.Request.Visit(vk)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}
+	return nil
 }

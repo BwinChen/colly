@@ -35,8 +35,5 @@ func main() {
 	c.OnHTML("body", sukebei.ParseList)
 
 	// 入口
-	err = c.Visit(sukebei.URL)
-	if err != nil {
-		log.Fatal(err)
-	}
+	sukebei.VisitPages(c)
 }
