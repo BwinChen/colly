@@ -159,16 +159,16 @@ func closeBody(b io.ReadCloser) {
 }
 
 type File struct {
-	Name string
-	Size int64
+	Name string `json:"name"`
+	Size int64  `json:"size"`
 }
 
 type Magnet struct {
-	Name      string
-	URL       string
-	AddedTime string
-	Magnet    string
-	Size      int64
-	Torrent   string
-	Files     []File
+	Name      string `json:"name"`
+	URL       string `json:"url"`
+	AddedTime string `json:"addedTime"`
+	Magnet    string `json:"magnet"`
+	Size      int64  `json:"size"`
+	Torrent   string `json:"torrent"`
+	Files     []File `json:"files"`
 }

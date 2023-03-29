@@ -118,9 +118,9 @@ func VisitPages(c *colly.Collector) {
 }
 
 func VisitViews(c *colly.Collector) {
-	//3770000 -> 3750000
-	//3750000 -> 3700000
-	for i := 3750000; i > 3700000; i-- {
+	//3652385 -> 3630000
+	//3616992 -> 3600000
+	for i := 3616992; i > 3600000; i-- {
 		v := fmt.Sprintf("https://sukebei.nyaa.si/view/%d", i)
 		if util.Search(util.Checksum(v)) > 0 {
 			// URL去重

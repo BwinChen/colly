@@ -1,7 +1,7 @@
 package main
 
 import (
-	"colly/sukebei"
+	"colly/rarbg"
 	"colly/util"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/proxy"
@@ -21,7 +21,7 @@ func main() {
 	// 拦截
 	c.OnRequest(func(r *colly.Request) {
 		r.Headers.Set("User-Agent", util.UserAgent)
-		r.Headers.Set("Cookie", sukebei.Cookie)
+		r.Headers.Set("Cookie", rarbg.Cookie)
 		log.Println("Visiting:", r.URL)
 	})
 
@@ -29,11 +29,11 @@ func main() {
 	c.OnResponse(util.Save)
 
 	// 详情
-	c.OnHTML("body", sukebei.ParseInfo)
+	c.OnHTML("body", rarbg.ParseInfo)
 
 	// 列表
-	c.OnHTML("body", sukebei.ParseList)
+	c.OnHTML("body", rarbg.ParseList)
 
 	// 入口
-	sukebei.VisitPages(c)
+	rarbg.VisitPages(c)
 }
