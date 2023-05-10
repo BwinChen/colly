@@ -11,11 +11,11 @@ import (
 	"time"
 )
 
-// 707
-var page = 707
+// 1000
+var page = 1
 
 // Cookie 绕过验证码
-var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; skt=4tax5cz3om; skt=4tax5cz3om; expla=1; tcc"
+var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; skt=fh7ecdaptf; skt=fh7ecdaptf"
 
 // 差7个时区
 var deadline = util.Deadline(fmt.Sprintf("-%dh", 7+24*365))

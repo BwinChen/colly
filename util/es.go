@@ -87,18 +87,18 @@ func IndexRequest(m Magnet) {
 	}
 }
 
-func Search(URL string) int {
+func Search(url string) int {
 	// 3. Search for the indexed documents
 	// Build the request body.
 	var buf bytes.Buffer
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"match": map[string]interface{}{
-				"URL": URL,
+				"url": url,
 			},
 		},
 		"_source": []string{
-			"URL",
+			"url",
 		},
 	}
 	err := json.NewEncoder(&buf).Encode(query)
