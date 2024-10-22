@@ -8,7 +8,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 )
 
 var deadline = util.Deadline(fmt.Sprintf("-%dh", 24*365))
@@ -64,51 +63,57 @@ func ParseList(b *colly.HTMLElement) {
 }
 
 func ParseInfo(b *colly.HTMLElement) {
-	m := util.Magnet{}
-	b.ForEach("h3", func(i int, h3 *colly.HTMLElement) {
-		if i == 0 {
-			m.Name = strings.Trim(h3.Text, "\n\t")
-		}
+	//m := util.Magnet{}
+	//b.ForEach("h3", func(i int, h3 *colly.HTMLElement) {
+	//	if i == 0 {
+	//		m.Name = strings.Trim(h3.Text, "\n\t")
+	//	}
+	//})
+	//var infoHash string
+	//b.ForEach("div.col-md-1", func(_ int, div *colly.HTMLElement) {
+	//	if strings.Contains(div.Text, "File size:") {
+	//		m.Size, _ = util.ConvertSize(div.DOM.Next().Text())
+	//	} else if strings.Contains(div.Text, "Info hash:") {
+	//		infoHash = div.DOM.Next().Text()
+	//	} else if strings.Contains(div.Text, "Date:") {
+	//		ts, _ := div.DOM.Next().Attr("data-timestamp")
+	//		sec, err := strconv.ParseInt(ts, 10, 64)
+	//		if err != nil {
+	//			log.Println(err)
+	//			return
+	//		}
+	//		m.AddedTime = time.Unix(sec, 0).Format("2006-01-02 15:04:05")
+	//	}
+	//})
+	//b.ForEach("div.panel-footer > a", func(i int, a *colly.HTMLElement) {
+	//	h := a.Attr("href")
+	//	if i == 0 {
+	//		m.Torrent = a.Request.AbsoluteURL(h)
+	//		a.Request.Ctx.Put("InfoHash", infoHash)
+	//		//if err := a.Request.Visit(h); err != nil {
+	//		//	log.Println(err)
+	//		//}
+	//	} else if i == 1 {
+	//		m.Magnet = h
+	//	}
+	//})
+	//b.ForEach(".torrent-file-list i.fa-file", func(_ int, i *colly.HTMLElement) {
+	//	f := util.File{}
+	//	f.Path = i.DOM.Get(0).NextSibling.Data
+	//	f.Length, _ = util.ConvertSize(strings.Trim(i.DOM.Next().Text(), "()"))
+	//	m.Files = append(m.Files, f)
+	//})
+	b.ForEach(".row kbd", func(i int, k *colly.HTMLElement) {
+		k.Request.Ctx.Put("InfoHash", k.Text)
 	})
-	var infoHash string
-	b.ForEach("div.col-md-1", func(_ int, div *colly.HTMLElement) {
-		if strings.Contains(div.Text, "File size:") {
-			m.Size, _ = util.ConvertSize(div.DOM.Next().Text())
-		} else if strings.Contains(div.Text, "Info hash:") {
-			infoHash = div.DOM.Next().Text()
-		} else if strings.Contains(div.Text, "Date:") {
-			ts, _ := div.DOM.Next().Attr("data-timestamp")
-			sec, err := strconv.ParseInt(ts, 10, 64)
+	b.ForEach(".panel-footer > a", func(i int, a *colly.HTMLElement) {
+		if i == 0 {
+			err := a.Request.Visit(a.Request.AbsoluteURL(a.Attr("href")))
 			if err != nil {
 				log.Println(err)
-				return
 			}
-			m.AddedTime = time.Unix(sec, 0).Format("2006-01-02 15:04:05")
 		}
 	})
-	b.ForEach("div.panel-footer > a", func(i int, a *colly.HTMLElement) {
-		h := a.Attr("href")
-		if i == 0 {
-			m.Torrent = a.Request.AbsoluteURL(h)
-			a.Request.Ctx.Put("InfoHash", infoHash)
-			//if err := a.Request.Visit(h); err != nil {
-			//	log.Println(err)
-			//}
-		} else if i == 1 {
-			m.Magnet = h
-		}
-	})
-	b.ForEach(".torrent-file-list i.fa-file", func(_ int, i *colly.HTMLElement) {
-		f := util.File{}
-		f.Name = i.DOM.Get(0).NextSibling.Data
-		f.Size, _ = util.ConvertSize(strings.Trim(i.DOM.Next().Text(), "()"))
-		m.Files = append(m.Files, f)
-	})
-	if m.Magnet != "" {
-		m.URL = util.Checksum(b.Request.URL.String())
-		//log.Println(m)
-		util.IndexRequest(m)
-	}
 }
 
 func VisitPages(c *colly.Collector) {
@@ -118,17 +123,19 @@ func VisitPages(c *colly.Collector) {
 }
 
 func VisitViews(c *colly.Collector) {
-	//2758806 -> 2750000
-	//2708072 -> 2700000
-	for i := 2708072; i > 2700000; i-- {
-		v := fmt.Sprintf("https://sukebei.nyaa.si/view/%d", i)
-		if util.Search(util.Checksum(v)) > 0 {
-			// URL去重
-			continue
-		}
-		if err := c.Visit(v); err != nil {
-			log.Println(err)
-		}
+	//for i := 4192944; i > 0; i-- {
+	//	v := fmt.Sprintf("https://sukebei.nyaa.si/view/%d", i)
+	//	if util.Search(util.Checksum(v)) > 0 {
+	//		// URL去重
+	//		continue
+	//	}
+	//	if err := c.Visit(v); err != nil {
+	//		log.Println(err)
+	//	}
+	//}
+	v := fmt.Sprintf("https://sukebei.nyaa.si/view/%d", 4192944)
+	if err := c.Visit(v); err != nil {
+		log.Println(err)
 	}
 }
 

@@ -15,7 +15,7 @@ import (
 var page = 1
 
 // Cookie 绕过验证码
-var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; skt=fh7ecdaptf; skt=fh7ecdaptf"
+var Cookie = "tzWHMELq=gkFrCnQx; tzWHMELq=gkFrCnQx; aby=2; skt=o3ucwthac2; skt=o3ucwthac2"
 
 // 差7个时区
 var deadline = util.Deadline(fmt.Sprintf("-%dh", 7+24*365))
@@ -98,8 +98,8 @@ func ParseInfo(b *colly.HTMLElement) {
 					continue
 				}
 				f := util.File{}
-				f.Name = strings.TrimSpace(tr.FirstChild.LastChild.Data)
-				f.Size, _ = util.ConvertSize(tr.LastChild.FirstChild.Data)
+				f.Path = strings.TrimSpace(tr.FirstChild.LastChild.Data)
+				f.Length, _ = util.ConvertSize(tr.LastChild.FirstChild.Data)
 				m.Files = append(m.Files, f)
 			}
 		} else if strings.Contains(td.Text, "Added:") {
