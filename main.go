@@ -1,8 +1,8 @@
 package main
 
 import (
-	"colly/sukebei"
-	"colly/util"
+	"github.com/BwinChen/colly/sukebei"
+	"github.com/BwinChen/colly/util"
 	"github.com/gocolly/colly/v2"
 	"log"
 	"time"
@@ -19,7 +19,7 @@ func main() {
 	//c.SetProxyFunc(pf)
 
 	// 请求超时
-	c.SetRequestTimeout(2000 * time.Millisecond)
+	c.SetRequestTimeout(10000 * time.Millisecond)
 
 	// 拦截
 	c.OnRequest(func(r *colly.Request) {
@@ -28,8 +28,12 @@ func main() {
 		log.Println("Visiting:", r.URL)
 	})
 
+	c.OnError(func(r *colly.Response, err error) {
+		log.Println("Request URL:", r.Request.URL, "failed with response:", r, "\nError:", err)
+	})
+
 	// 下载
-	c.OnResponse(util.Save)
+	c.OnResponse(sukebei.Save)
 
 	// 详情
 	c.OnHTML("body", sukebei.ParseInfo)

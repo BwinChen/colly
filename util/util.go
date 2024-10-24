@@ -2,10 +2,7 @@ package util
 
 import (
 	"errors"
-	"fmt"
-	"github.com/gocolly/colly/v2"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -21,23 +18,6 @@ func Deadline(duration string) int64 {
 	}
 	n = n.Add(d)
 	return n.Unix()
-}
-
-func Save(r *colly.Response) {
-	if strings.Contains(r.Request.URL.String(), ".torrent") {
-		n := time.Now()
-		f := fmt.Sprintf("./torrents/%d/%d/%d", n.Year(), n.Month(), n.Day())
-		err := os.MkdirAll(f, 0777)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		f += fmt.Sprintf("/%s.torrent", r.Ctx.Get("InfoHash"))
-		err = r.Save(f)
-		if err != nil {
-			log.Println(err)
-		}
-	}
 }
 
 func ConvertSize(s string) (int64, error) {

@@ -16,7 +16,7 @@ func ParseTorrent(path string) (*Torrent, error) {
 	defer func(file *os.File) {
 		err = file.Close()
 		if err != nil {
-			log.Fatalf("Error closing .torrent file: %v", err)
+			log.Printf("Error closing .torrent file: %v", err)
 		}
 	}(file)
 	var mi *metainfo.MetaInfo
@@ -24,30 +24,42 @@ func ParseTorrent(path string) (*Torrent, error) {
 	if err != nil {
 		return &Torrent{}, err
 	}
-	var torrent Torrent
-	torrent.InfoHash = mi.HashInfoBytes().String()
-	torrent.CreationDate = time.Unix(mi.CreationDate, 0).Format("2006-01-02 15:04:05")
+	var t Torrent
+	t.InfoHash = mi.HashInfoBytes().String()
+	t.CreationDate = time.Unix(mi.CreationDate, 0).Format("2006-01-02 15:04:05")
 	var info map[string]interface{}
 	err = bencode.Unmarshal(mi.InfoBytes, &info)
 	if err != nil {
 		return &Torrent{}, err
 	}
-	torrent.Name = info["name"].(string)
-	files := info["files"].([]interface{})
-	for _, file := range files {
-		var f File
-		f.Length = file.(map[string]interface{})["length"].(int64)
-		torrent.Length += f.Length
-		//f.Path = "/"
-		path := file.(map[string]interface{})["path"].([]interface{})
-		for i, p := range path {
-			f.Path += p.(string)
-			if i != len(path)-1 {
-				f.Path += "/"
+	t.Name = info["name"].(string)
+	v, e := info["files"]
+	if e {
+		// 多文件torrent
+		files := v.([]interface{})
+		for _, file := range files {
+			var f File
+			f.Length = file.(map[string]interface{})["length"].(int64)
+			t.Length += f.Length
+			//f.Path = "/"
+			path := file.(map[string]interface{})["path"].([]interface{})
+			for i, p := range path {
+				f.Path += p.(string)
+				if i != len(path)-1 {
+					f.Path += "/"
+				}
 			}
+			t.Files = append(t.Files, f)
 		}
-		torrent.Files = append(torrent.Files, f)
+		t.FileNumber = len(files)
+	} else {
+		// 单文件torrent
+		var f File
+		f.Length = info["length"].(int64)
+		f.Path = info["name"].(string)
+		t.Length = f.Length
+		t.Files = append(t.Files, f)
+		t.FileNumber = 1
 	}
-	torrent.FileNumber = len(files)
-	return &torrent, nil
+	return &t, nil
 }

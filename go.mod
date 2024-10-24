@@ -5,6 +5,7 @@ go 1.23
 require (
 	github.com/anacrolix/torrent v1.57.1
 	github.com/elastic/go-elasticsearch/v7 v7.17.7
+	github.com/go-redis/redis/v7 v7.4.1
 	github.com/gocolly/colly/v2 v2.1.0
 )
 

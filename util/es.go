@@ -13,6 +13,7 @@ import (
 	"strings"
 )
 
+var index = "magnet"
 var c *elasticsearch.Client
 
 func init() {
@@ -99,38 +100,34 @@ func IndexRequest(m Magnet) {
 	}
 }
 
-func IndexTorrent(t Torrent) error {
+func IndexTorrent(t Torrent) (string, error) {
 	// Build the request body.
 	b, err := json.Marshal(t)
 	if err != nil {
-		return err
+		return "", err
 	}
 	// Set up the request object.
 	req := esapi.IndexRequest{
-		Index:   "torrent",
+		Index:   index,
 		Body:    bytes.NewReader(b),
 		Refresh: "true",
 	}
 	// Perform the request with the client.
 	res, err := req.Do(context.Background(), c)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer closeBody(res.Body)
 	if res.IsError() {
-		return errors.New(fmt.Sprintf("Error indexing document: [%s]", res.Status()))
-	} else {
-		// Deserialize the response into a map.
-		var r map[string]interface{}
-		err = json.NewDecoder(res.Body).Decode(&r)
-		if err != nil {
-			return err
-		} else {
-			// Print the response status and indexed document version.
-			log.Printf("[%s] %s; version=%d", res.Status(), r["result"], int(r["_version"].(float64)))
-		}
+		return "", errors.New(fmt.Sprintf("Error indexing document: [%s]", res.Status()))
 	}
-	return nil
+	// Deserialize the response into a map.
+	var r map[string]interface{}
+	err = json.NewDecoder(res.Body).Decode(&r)
+	if err != nil {
+		return "", err
+	}
+	return r["_id"].(string), nil
 }
 
 func Search(url string) int {
@@ -216,7 +213,7 @@ func SearchByInfoHash(ih string) (int, error) {
 	}
 	res, err := c.Search(
 		c.Search.WithContext(context.Background()),
-		c.Search.WithIndex("torrent"),
+		c.Search.WithIndex(index),
 		c.Search.WithBody(&buf),
 		c.Search.WithTrackTotalHits(true),
 		c.Search.WithPretty(),
@@ -265,7 +262,7 @@ func DeleteByInfoHash(ih string) (int, error) {
 	}
 	// 执行 DeleteByQuery 请求
 	res, err := c.DeleteByQuery(
-		[]string{"torrent"},
+		[]string{index},
 		strings.NewReader(string(b)),
 		c.DeleteByQuery.WithPretty(),
 	)
@@ -298,6 +295,15 @@ type File struct {
 	Length int64  `json:"length"`
 }
 
+type Torrent struct {
+	Name         string `json:"name"`
+	Length       int64  `json:"totalLength"`
+	InfoHash     string `json:"infoHash"`
+	CreationDate string `json:"creationDate"`
+	Files        []File `json:"torrentFiles"`
+	FileNumber   int    `json:"totalFiles"`
+}
+
 type Magnet struct {
 	Name      string `json:"name"`
 	URL       string `json:"url"`
@@ -306,13 +312,4 @@ type Magnet struct {
 	Size      int64  `json:"size"`
 	Torrent   string `json:"torrent"`
 	Files     []File `json:"files"`
-}
-
-type Torrent struct {
-	Name         string `json:"name"`
-	Length       int64  `json:"totalLength"`
-	InfoHash     string `json:"infoHash"`
-	CreationDate string `json:"creationDate"`
-	Files        []File `json:"torrentFiles"`
-	FileNumber   int    `json:"totalFiles"`
 }
