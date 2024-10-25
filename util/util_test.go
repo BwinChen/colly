@@ -18,10 +18,11 @@ func TestIndexTorrent(t *testing.T) {
 	if err != nil {
 		log.Fatalf("Error parsing .torrent file: %v", err)
 	}
-	err = IndexTorrent(*torrent)
+	id, err := IndexTorrent(torrent)
 	if err != nil {
 		log.Fatalf("Error indexing torrent: %v", err)
 	}
+	log.Printf("ES Torrent id: %s\n", id)
 }
 
 func TestSearchByInfoHash(t *testing.T) {

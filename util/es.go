@@ -14,24 +14,24 @@ import (
 )
 
 var index = "magnet"
-var c *elasticsearch.Client
+var ec *elasticsearch.Client
 
 func init() {
 	//log.SetFlags(0)
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			"http://192.168.0.6:9200",
+			"http://127.0.0.1:9200",
 		},
 		Username: "elastic",
 		Password: "elastic",
 	}
 	var err error
-	c, err = elasticsearch.NewClient(cfg)
+	ec, err = elasticsearch.NewClient(cfg)
 	if err != nil {
 		log.Fatalf("Error creating the client: %s", err)
 	}
 	// 1. Get cluster info
-	res, err := c.Info()
+	res, err := ec.Info()
 	if err != nil {
 		log.Fatalf("Error getting response: %s", err)
 	}
@@ -48,7 +48,7 @@ func init() {
 	log.Printf("Server: %s", m["version"].(map[string]interface{})["number"])
 
 	// 获取Elasticsearch集群的健康状态
-	res, err = c.Cluster.Health(c.Cluster.Health.WithPretty())
+	res, err = ec.Cluster.Health(ec.Cluster.Health.WithPretty())
 	if err != nil {
 		log.Fatalf("Error getting cluster health: %s", err)
 	}
@@ -79,7 +79,7 @@ func IndexRequest(m Magnet) {
 	}
 
 	// Perform the request with the client.
-	res, err := req.Do(context.Background(), c)
+	res, err := req.Do(context.Background(), ec)
 	if err != nil {
 		log.Fatalf("Error getting response: %s", err)
 	}
@@ -100,7 +100,7 @@ func IndexRequest(m Magnet) {
 	}
 }
 
-func IndexTorrent(t Torrent) (string, error) {
+func IndexTorrent(t *Torrent) (string, error) {
 	// Build the request body.
 	b, err := json.Marshal(t)
 	if err != nil {
@@ -113,7 +113,7 @@ func IndexTorrent(t Torrent) (string, error) {
 		Refresh: "true",
 	}
 	// Perform the request with the client.
-	res, err := req.Do(context.Background(), c)
+	res, err := req.Do(context.Background(), ec)
 	if err != nil {
 		return "", err
 	}
@@ -151,12 +151,12 @@ func Search(url string) int {
 
 	// Perform the search request.
 	var res *esapi.Response
-	res, err = c.Search(
-		c.Search.WithContext(context.Background()),
-		c.Search.WithIndex("magnet"),
-		c.Search.WithBody(&buf),
-		c.Search.WithTrackTotalHits(true),
-		c.Search.WithPretty(),
+	res, err = ec.Search(
+		ec.Search.WithContext(context.Background()),
+		ec.Search.WithIndex("magnet"),
+		ec.Search.WithBody(&buf),
+		ec.Search.WithTrackTotalHits(true),
+		ec.Search.WithPretty(),
 	)
 	if err != nil {
 		log.Fatalf("Error getting response: %s", err)
@@ -211,12 +211,12 @@ func SearchByInfoHash(ih string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	res, err := c.Search(
-		c.Search.WithContext(context.Background()),
-		c.Search.WithIndex(index),
-		c.Search.WithBody(&buf),
-		c.Search.WithTrackTotalHits(true),
-		c.Search.WithPretty(),
+	res, err := ec.Search(
+		ec.Search.WithContext(context.Background()),
+		ec.Search.WithIndex(index),
+		ec.Search.WithBody(&buf),
+		ec.Search.WithTrackTotalHits(true),
+		ec.Search.WithPretty(),
 	)
 	if err != nil {
 		return 0, err
@@ -261,10 +261,10 @@ func DeleteByInfoHash(ih string) (int, error) {
 		return 0, err
 	}
 	// 执行 DeleteByQuery 请求
-	res, err := c.DeleteByQuery(
+	res, err := ec.DeleteByQuery(
 		[]string{index},
 		strings.NewReader(string(b)),
-		c.DeleteByQuery.WithPretty(),
+		ec.DeleteByQuery.WithPretty(),
 	)
 	if err != nil {
 		return 0, err

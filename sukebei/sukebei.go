@@ -106,11 +106,22 @@ func ParseInfo(b *colly.HTMLElement) {
 		//	f.Length, _ = util.ConvertSize(strings.Trim(i.DOM.Next().Text(), "()"))
 		//	m.Files = append(m.Files, f)
 		//})
-		b.ForEach(".row kbd", func(i int, k *colly.HTMLElement) {
-			k.Request.Ctx.Put("InfoHash", k.Text)
-			u := strings.Split(k.Request.URL.String(), "/")
-			k.Request.Ctx.Put("ID", u[len(u)-1])
+		var infoHash string
+		b.ForEach(".row kbd", func(i int, kbd *colly.HTMLElement) {
+			infoHash = kbd.Text
+			kbd.Request.Ctx.Put("InfoHash", infoHash)
+			url := strings.Split(kbd.Request.URL.String(), "/")
+			kbd.Request.Ctx.Put("ID", url[len(url)-1])
 		})
+		// es去重
+		hit, err := util.SearchByInfoHash(infoHash)
+		if err != nil {
+			log.Printf("SearchByInfoHash Error: %v\n", err)
+			return
+		}
+		if hit > 0 {
+			return
+		}
 		b.ForEach(".panel-footer > a", func(i int, a *colly.HTMLElement) {
 			if i == 0 {
 				err := a.Request.Visit(a.Request.AbsoluteURL(a.Attr("href")))
@@ -174,7 +185,8 @@ func view(i int, h string, td *colly.HTMLElement) error {
 }
 
 func Save(r *colly.Response) {
-	if strings.Contains(r.Request.URL.String(), ".torrent") {
+	url := r.Request.URL.String()
+	if strings.Contains(url, ".torrent") {
 		n := time.Now()
 		f := fmt.Sprintf("./torrents/%d/%d/%d", n.Year(), n.Month(), n.Day())
 		err := os.MkdirAll(f, 0777)
@@ -189,41 +201,50 @@ func Save(r *colly.Response) {
 			log.Printf("Save Error: %v\n", err)
 			return
 		}
-		t, err := util.ParseTorrent(f)
+		// 删除文件
+		defer func(f string) {
+			err := os.Remove(f)
+			if err != nil {
+				log.Printf("Remove Error: %v\n", err)
+				return
+			}
+			_ = os.Remove(filepath.Dir(f))
+		}(f)
+		// redis记录ID以去重
+		defer func(url string) {
+			id := r.Ctx.Get("ID")
+			_, err := util.SAdd(id)
+			if err != nil {
+				log.Printf("SAdd Error: %v\n", err)
+				return
+			}
+			log.Printf("ID %s added to Redis\n", id)
+		}(url)
+		torrent, err := util.ParseTorrent(f)
 		if err != nil {
 			log.Printf("ParseTorrent Error: %v\n", err)
 			return
 		}
-		// es去重
-		h, err := util.SearchByInfoHash(t.InfoHash)
-		if err != nil {
-			log.Printf("SearchByInfoHash Error: %v\n", err)
-			return
-		}
-		if h > 0 {
-			return
-		}
 		// 索引torrent
-		i, err := util.IndexTorrent(*t)
+		id, err := util.IndexTorrent(torrent)
 		if err != nil {
 			log.Printf("IndexTorrent Error: %v\n", err)
 			return
 		}
-		log.Printf("ES Torrent id: %s\n", i)
-		// redis记录ID以去重
-		r, err := util.SAdd(r.Ctx.Get("ID"))
-		if err != nil {
-			log.Printf("SAdd Error: %v\n", err)
+		log.Printf("ES Torrent id: %s\n", id)
+	}
+}
+
+func ErrorHandler(r *colly.Response, err error) {
+	url := r.Request.URL.String()
+	if strings.Contains(url, "/view/") && r.StatusCode == 404 {
+		ss := strings.Split(url, "/")
+		id := ss[len(ss)-1]
+		_, e := util.SAdd(id)
+		if e != nil {
+			log.Printf("SAdd Error: %v\n", e)
 			return
 		}
-		log.Printf("%d ID added to Redis\n", r)
-		// 删除文件
-		err = os.Remove(f)
-		if err != nil {
-			log.Printf("Remove Error: %v\n", err)
-			return
-		}
-		// 删除父目录
-		_ = os.Remove(filepath.Dir(f))
+		log.Printf("ID %s added to Redis\n", id)
 	}
 }

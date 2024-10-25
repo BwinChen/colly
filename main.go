@@ -12,11 +12,11 @@ func main() {
 	c := colly.NewCollector()
 
 	// 代理
-	//pf, err := proxy.RoundRobinProxySwitcher("socks5://127.0.0.1:10808")
+	//proxyFunc, err := proxy.RoundRobinProxySwitcher("socks5://192.168.0.4:1070")
 	//if err != nil {
-	//	log.Fatal(err)
+	//	log.Fatalf("RoundRobinProxySwitcher Error: %v", err)
 	//}
-	//c.SetProxyFunc(pf)
+	//c.SetProxyFunc(proxyFunc)
 
 	// 请求超时
 	c.SetRequestTimeout(10000 * time.Millisecond)
@@ -28,9 +28,7 @@ func main() {
 		log.Println("Visiting:", r.URL)
 	})
 
-	c.OnError(func(r *colly.Response, err error) {
-		log.Println("Request URL:", r.Request.URL, "failed with response:", r, "\nError:", err)
-	})
+	c.OnError(sukebei.ErrorHandler)
 
 	// 下载
 	c.OnResponse(sukebei.Save)

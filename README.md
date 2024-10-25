@@ -151,6 +151,7 @@ GET magnet/_search
 }
 ```
 ##### 测试分词
+
 ```bash
 POST magnet/_analyze
 {
@@ -158,16 +159,29 @@ POST magnet/_analyze
   "text":     "SexArt.23.03.17.Alexis.Crystal.And.Ryana.Fondness.XXX.SD.MP4-KLEENEX"
 }
 ```
+
 ##### 导入导出
-1. 导出数据 
+
+1. 导出数据
+
 ```bash
 elasticdump --input=http://localhost:9200/magnet --output=magnet.json --type=data
 ```
+
 2. 导入数据 
+
 ```bash
 elasticdump --input=magnet.json --output=http://localhost:9200/magnet --type=data
 ```
+
 ##### 编译
+
 ```bash
 go build -o releases/sukebei.exe
+```
+
+##### 运行
+
+```bash
+nohup ./sukebei > ./sukebei.log 2>&1 &
 ```
