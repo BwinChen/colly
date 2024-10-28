@@ -66,52 +66,14 @@ func ParseList(b *colly.HTMLElement) {
 
 func ParseInfo(b *colly.HTMLElement) {
 	if strings.Contains(b.Request.URL.String(), "/view/") {
-		//m := util.Magnet{}
-		//b.ForEach("h3", func(i int, h3 *colly.HTMLElement) {
-		//	if i == 0 {
-		//		m.Name = strings.Trim(h3.Text, "\n\t")
-		//	}
-		//})
-		//var infoHash string
-		//b.ForEach("div.col-md-1", func(_ int, div *colly.HTMLElement) {
-		//	if strings.Contains(div.Text, "File size:") {
-		//		m.Size, _ = util.ConvertSize(div.DOM.Next().Text())
-		//	} else if strings.Contains(div.Text, "Info hash:") {
-		//		infoHash = div.DOM.Next().Text()
-		//	} else if strings.Contains(div.Text, "Date:") {
-		//		ts, _ := div.DOM.Next().Attr("data-timestamp")
-		//		sec, err := strconv.ParseInt(ts, 10, 64)
-		//		if err != nil {
-		//			log.Println(err)
-		//			return
-		//		}
-		//		m.AddedTime = time.Unix(sec, 0).Format("2006-01-02 15:04:05")
-		//	}
-		//})
-		//b.ForEach("div.panel-footer > a", func(i int, a *colly.HTMLElement) {
-		//	h := a.Attr("href")
-		//	if i == 0 {
-		//		m.Torrent = a.Request.AbsoluteURL(h)
-		//		a.Request.Ctx.Put("InfoHash", infoHash)
-		//		//if err := a.Request.Visit(h); err != nil {
-		//		//	log.Println(err)
-		//		//}
-		//	} else if i == 1 {
-		//		m.Magnet = h
-		//	}
-		//})
-		//b.ForEach(".torrent-file-list i.fa-file", func(_ int, i *colly.HTMLElement) {
-		//	f := util.File{}
-		//	f.Path = i.DOM.Get(0).NextSibling.Data
-		//	f.Length, _ = util.ConvertSize(strings.Trim(i.DOM.Next().Text(), "()"))
-		//	m.Files = append(m.Files, f)
-		//})
 		var infoHash string
+		var id string
 		b.ForEach(".row kbd", func(i int, kbd *colly.HTMLElement) {
 			infoHash = kbd.Text
 			kbd.Request.Ctx.Put("InfoHash", infoHash)
 			url := strings.Split(kbd.Request.URL.String(), "/")
-			kbd.Request.Ctx.Put("ID", url[len(url)-1])
+			id = url[len(url)-1]
+			kbd.Request.Ctx.Put("ID", id)
 		})
 		// es去重
 		hit, err := util.SearchByInfoHash(infoHash)
@@ -120,13 +82,19 @@ func ParseInfo(b *colly.HTMLElement) {
 			return
 		}
 		if hit > 0 {
+			_, err := util.SAdd(id)
+			if err != nil {
+				log.Printf("SAdd Error: %v\n", err)
+				return
+			}
+			log.Printf("ID %s added to Redis\n", id)
 			return
 		}
 		b.ForEach(".panel-footer > a", func(i int, a *colly.HTMLElement) {
 			if i == 0 {
 				err := a.Request.Visit(a.Request.AbsoluteURL(a.Attr("href")))
 				if err != nil {
-					log.Println(err)
+					log.Printf("Visit Error: %v\n", err)
 				}
 			}
 		})
@@ -211,7 +179,7 @@ func Save(r *colly.Response) {
 			_ = os.Remove(filepath.Dir(f))
 		}(f)
 		// redis记录ID以去重
-		defer func(url string) {
+		defer func() {
 			id := r.Ctx.Get("ID")
 			_, err := util.SAdd(id)
 			if err != nil {
@@ -219,7 +187,7 @@ func Save(r *colly.Response) {
 				return
 			}
 			log.Printf("ID %s added to Redis\n", id)
-		}(url)
+		}()
 		torrent, err := util.ParseTorrent(f)
 		if err != nil {
 			log.Printf("ParseTorrent Error: %v\n", err)

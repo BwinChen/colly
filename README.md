@@ -1,4 +1,7 @@
-##### 索引操作
+### elasticsearch操作
+
+#### 创建索引
+
 ```bash
 PUT magnet
 {
@@ -87,13 +90,19 @@ PUT magnet
 }
 ```
 
+#### 查询索引映射
+
 ```bash
 GET magnet/_mapping
 ```
 
+#### 删除索引
+
 ```bash
 DELETE magnet
 ```
+
+#### 复制索引
 
 ```bash
 POST _reindex
@@ -106,11 +115,14 @@ POST _reindex
   }
 }
 ```
-##### 搜索
+
+#### 查询文档数量
 
 ```bash
 GET magnet/_count
 ```
+
+#### 查询全部文档
 
 ```bash
 GET magnet/_search
@@ -120,6 +132,8 @@ GET magnet/_search
   }
 }
 ```
+
+##### should查询
 
 ```bash
 GET magnet/_search
@@ -141,6 +155,7 @@ GET magnet/_search
   }
 }
 ```
+#### 通配符查询
 
 ```bash
 GET magnet/_search
@@ -150,7 +165,7 @@ GET magnet/_search
   }
 }
 ```
-##### 测试分词
+#### 测试分词
 
 ```bash
 POST magnet/_analyze
@@ -160,28 +175,46 @@ POST magnet/_analyze
 }
 ```
 
-##### 导入导出
+---
 
-1. 导出数据
+### elasticsearch数据导入导出
+
+#### 导出数据
 
 ```bash
 elasticdump --input=http://localhost:9200/magnet --output=magnet.json --type=data
 ```
 
-2. 导入数据 
+#### 导入数据 
 
 ```bash
 elasticdump --input=magnet.json --output=http://localhost:9200/magnet --type=data
 ```
 
-##### 编译
+---
+
+### 运维
+
+#### 编译
 
 ```bash
-go build -o releases/sukebei.exe
+go build -o releases/sukebei
 ```
 
-##### 运行
+#### 运行
 
 ```bash
-nohup ./sukebei > ./sukebei.log 2>&1 &
+nohup releases/sukebei > releases/sukebei.log 2>&1 &
+```
+
+#### 查看日志
+
+```bash
+tail -f releases/sukebei.log
+```
+
+#### 查看进程
+
+```bash
+ps aux | grep releases/sukebei
 ```
