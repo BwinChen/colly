@@ -1,8 +1,10 @@
 package util
 
 import (
+	"fmt"
 	"github.com/go-redis/redis/v7"
 	"log"
+	"time"
 )
 
 var rc *redis.Client
@@ -13,7 +15,7 @@ func init() {
 
 func NewClient() {
 	rc = redis.NewClient(&redis.Options{
-		Addr:     "127.0.0.1:6379",
+		Addr:     fmt.Sprintf("%s:6379", IP),
 		Password: "",
 		DB:       0,
 	})
@@ -46,4 +48,18 @@ func SRem(m string) (int64, error) {
 		return 0, err
 	}
 	return r, err
+}
+
+func SetNX(key string, value interface{}, expiration time.Duration) (bool, error) {
+	ok, err := rc.SetNX(key, value, expiration).Result()
+	if err != nil {
+		return false, err
+	}
+	if ok {
+		// Key was set successfully because it did not exist
+		return true, err
+	} else {
+		// Key was not set because it already exists
+		return false, err
+	}
 }

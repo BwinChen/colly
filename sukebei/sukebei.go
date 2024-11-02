@@ -64,7 +64,7 @@ func ParseList(b *colly.HTMLElement) {
 	})
 }
 
-func ParseInfo(b *colly.HTMLElement) {
+func ParseHTML(b *colly.HTMLElement) {
 	if strings.Contains(b.Request.URL.String(), "/view/") {
 		var infoHash string
 		var id string
@@ -107,7 +107,7 @@ func VisitPages(c *colly.Collector) {
 	}
 }
 
-func VisitViews(c *colly.Collector) {
+func Visit(c *colly.Collector) {
 	for i := 4192944; i > 4000000; i-- {
 		r, err := util.SIsMember(strconv.Itoa(i))
 		if err != nil {

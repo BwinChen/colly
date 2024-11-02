@@ -20,7 +20,7 @@ func init() {
 	//log.SetFlags(0)
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			"http://127.0.0.1:9200",
+			fmt.Sprintf("http://%s:9200", IP),
 		},
 		Username: "elastic",
 		Password: "elastic",

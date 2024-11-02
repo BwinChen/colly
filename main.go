@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/BwinChen/colly/sukebei"
+	"github.com/BwinChen/colly/bt4g"
 	"github.com/BwinChen/colly/util"
 	"github.com/gocolly/colly/v2"
+	"github.com/gocolly/colly/v2/proxy"
 	"log"
 	"time"
 )
@@ -11,34 +12,35 @@ import (
 func main() {
 	c := colly.NewCollector()
 
-	// 代理
-	//proxyFunc, err := proxy.RoundRobinProxySwitcher("socks5://192.168.0.4:1070")
-	//if err != nil {
-	//	log.Fatalf("RoundRobinProxySwitcher Error: %v", err)
-	//}
-	//c.SetProxyFunc(proxyFunc)
+	// 设置代理
+	proxyFunc, err := proxy.RoundRobinProxySwitcher("socks5://192.168.0.4:1070")
+	if err != nil {
+		log.Fatalf("RoundRobinProxySwitcher Error: %v", err)
+	}
+	c.SetProxyFunc(proxyFunc)
 
-	// 请求超时
+	// 设置请求超时
 	c.SetRequestTimeout(10000 * time.Millisecond)
 
-	// 拦截
+	// 设置Request Header
 	c.OnRequest(func(r *colly.Request) {
 		r.Headers.Set("User-Agent", util.UserAgent)
-		r.Headers.Set("Cookie", sukebei.Cookie)
+		r.Headers.Set("Cookie", bt4g.Cookie)
 		log.Println("Visiting:", r.URL)
 	})
 
-	c.OnError(sukebei.ErrorHandler)
+	// 限制速率
+	bt4g.Limit(c)
 
-	// 下载
-	c.OnResponse(sukebei.Save)
+	// 处理错误
+	c.OnError(bt4g.ErrorHandler)
 
-	// 详情
-	c.OnHTML("body", sukebei.ParseInfo)
+	// 处理响应
+	c.OnResponse(bt4g.Save)
 
-	// 列表
-	//c.OnHTML("body", sukebei.ParseList)
+	// 解析HTML
+	c.OnHTML("body", bt4g.ParseHTML)
 
-	// 入口
-	sukebei.VisitViews(c)
+	// 开始爬取
+	bt4g.Visit(c)
 }

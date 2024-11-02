@@ -8,7 +8,10 @@ import (
 	"time"
 )
 
-const UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.69"
+const (
+	UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0"
+	IP        = "192.168.0.6"
+)
 
 func Deadline(duration string) int64 {
 	n := time.Now()
