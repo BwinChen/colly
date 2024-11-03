@@ -7,6 +7,7 @@ require (
 	github.com/elastic/go-elasticsearch/v7 v7.17.7
 	github.com/go-redis/redis/v7 v7.4.1
 	github.com/gocolly/colly/v2 v2.1.0
+	github.com/tebeka/selenium v0.9.9
 )
 
 require (
@@ -18,6 +19,7 @@ require (
 	github.com/antchfx/htmlquery v1.2.3 // indirect
 	github.com/antchfx/xmlquery v1.2.4 // indirect
 	github.com/antchfx/xpath v1.1.8 // indirect
+	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/bradfitz/iter v0.0.0-20191230175014-e8f45d346db8 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect

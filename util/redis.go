@@ -26,40 +26,77 @@ func NewClient() {
 	log.Println("Pong:", r)
 }
 
-func SAdd(id string) (int64, error) {
-	r, err := rc.SAdd("ids", id).Result()
+func SAdd(key, id string) (int64, error) {
+	r, err := rc.SAdd(key, id).Result()
 	if err != nil {
 		return 0, err
 	}
 	return r, nil
 }
 
-func SIsMember(m string) (bool, error) {
-	r, err := rc.SIsMember("ids", m).Result()
+func SIsMember(key, m string) (bool, error) {
+	r, err := rc.SIsMember(key, m).Result()
 	if err != nil {
 		return false, err
 	}
 	return r, nil
 }
 
-func SRem(m string) (int64, error) {
-	r, err := rc.SRem("ids", m).Result()
+func SRem(key, m string) (int64, error) {
+	r, err := rc.SRem(key, m).Result()
 	if err != nil {
 		return 0, err
 	}
 	return r, err
 }
 
-func SetNX(key string, value interface{}, expiration time.Duration) (bool, error) {
+func SetNX(key string, value interface{}, expiration time.Duration) bool {
 	ok, err := rc.SetNX(key, value, expiration).Result()
 	if err != nil {
-		return false, err
+		log.Printf("SetNX Error: %v\n", err)
+		return false
 	}
 	if ok {
 		// Key was set successfully because it did not exist
-		return true, err
+		return true
 	} else {
 		// Key was not set because it already exists
-		return false, err
+		return false
 	}
+}
+
+// RPush 向 List 中添加元素
+func RPush(key string, value interface{}) (int64, error) {
+	result, err := rc.RPush(key, value).Result()
+	if err != nil {
+		return 0, err
+	}
+	return result, err
+}
+
+// LPop 从 List 中移除第一个元素
+func LPop(key string) (string, error) {
+	result, err := rc.LPop(key).Result()
+	if err != nil {
+		return "", err
+	}
+	return result, err
+}
+
+// Del 删除 key
+func Del(key string) (int64, error) {
+	result, err := rc.Del(key).Result()
+	if err != nil {
+		return 0, err
+	}
+	return result, nil
+}
+
+// LLen 获取列表的长度
+func LLen(key string) (int64, error) {
+	result, err := rc.LLen(key).Result()
+	if err != nil {
+		return 0, err
+	}
+	return result, nil
 }

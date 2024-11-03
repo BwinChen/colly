@@ -9,12 +9,12 @@ import (
 	"time"
 )
 
-var Cookie = "ge_js_validator_28=1730515531@28@10269e5372d140ebd584ba535b8e6d15"
+var Cookie = "ge_js_validator_28=1730522647@28@b4e9ac25624c8970a90e01a008c04d86"
 
 func Limit(c *colly.Collector) {
 	err := c.Limit(&colly.LimitRule{
 		DomainGlob: "*",
-		Delay:      1 * time.Second,
+		Delay:      2 * time.Second,
 	})
 	if err != nil {
 		log.Fatalf("Limit Error: %v", err)
@@ -29,9 +29,6 @@ func Visit(c *colly.Collector) {
 }
 
 func ParseHTML(body *colly.HTMLElement) {
-	if strings.TrimSpace(body.Text) == "" {
-		log.Printf("empty body: %v\n", body.Text)
-	}
 	url := body.Request.URL.String()
 	if strings.Contains(url, "/new") {
 		var count int
@@ -46,17 +43,12 @@ func ParseHTML(body *colly.HTMLElement) {
 			div.ForEach("a.text-decoration-none", func(_ int, a *colly.HTMLElement) {
 				href := a.Attr("href")
 				id := href[strings.Index(href, "/magnet/")+len("/magnet/"):]
-				exists, err := util.SetNX(fmt.Sprintf("colly:bt4g:%s", id), a.Attr("title"), 5*time.Minute)
-				if err != nil {
-					log.Printf("SetNX Error: %v\n", err)
-					return
-				}
-				if !exists {
+				ok := util.SetNX(fmt.Sprintf("colly:bt4g:%s", id), a.Attr("title"), 5*time.Minute)
+				if !ok {
 					return
 				}
 				log.Printf("%s\n", creationTime)
-				err = a.Request.Visit(a.Request.AbsoluteURL(href))
-				if err != nil {
+				if err := a.Request.Visit(a.Request.AbsoluteURL(href)); err != nil {
 					log.Printf("Visit Error: %v\n", err)
 				}
 			})
@@ -77,14 +69,6 @@ func ParseHTML(body *colly.HTMLElement) {
 	}
 }
 
-func Save(r *colly.Response) {
-	// 访问响应头
-	setCookie := r.Headers.Get("Set-Cookie")
-	if setCookie != "" {
-		log.Printf("Set-Cookie: %s\n", r.StatusCode)
-	}
-}
+func Save(r *colly.Response) {}
 
-func ErrorHandler(r *colly.Response, err error) {
-
-}
+func ErrorHandler(r *colly.Response, err error) {}

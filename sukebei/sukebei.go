@@ -16,6 +16,8 @@ var deadline = util.Deadline(fmt.Sprintf("-%dh", 24*365))
 var page = 1
 var Cookie = ""
 
+const key = "colly:sukebei:ids"
+
 func ParseList(b *colly.HTMLElement) {
 	b.ForEach("tr", func(i int, tr *colly.HTMLElement) {
 		var h string
@@ -64,64 +66,9 @@ func ParseList(b *colly.HTMLElement) {
 	})
 }
 
-func ParseHTML(b *colly.HTMLElement) {
-	if strings.Contains(b.Request.URL.String(), "/view/") {
-		var infoHash string
-		var id string
-		b.ForEach(".row kbd", func(i int, kbd *colly.HTMLElement) {
-			infoHash = kbd.Text
-			kbd.Request.Ctx.Put("InfoHash", infoHash)
-			url := strings.Split(kbd.Request.URL.String(), "/")
-			id = url[len(url)-1]
-			kbd.Request.Ctx.Put("ID", id)
-		})
-		// es去重
-		hit, err := util.SearchByInfoHash(infoHash)
-		if err != nil {
-			log.Printf("SearchByInfoHash Error: %v\n", err)
-			return
-		}
-		if hit > 0 {
-			_, err := util.SAdd(id)
-			if err != nil {
-				log.Printf("SAdd Error: %v\n", err)
-				return
-			}
-			log.Printf("ID %s added to Redis\n", id)
-			return
-		}
-		b.ForEach(".panel-footer > a", func(i int, a *colly.HTMLElement) {
-			if i == 0 {
-				err := a.Request.Visit(a.Request.AbsoluteURL(a.Attr("href")))
-				if err != nil {
-					log.Printf("Visit Error: %v\n", err)
-				}
-			}
-		})
-	}
-}
-
 func VisitPages(c *colly.Collector) {
 	if err := c.Visit(fmt.Sprintf("https://sukebei.nyaa.si/?p=%d", page)); err != nil {
 		log.Fatal(err)
-	}
-}
-
-func Visit(c *colly.Collector) {
-	for i := 4192944; i > 4000000; i-- {
-		r, err := util.SIsMember(strconv.Itoa(i))
-		if err != nil {
-			log.Printf("SIsMember Error: %v\n", err)
-			continue
-		}
-		if r {
-			// 去重
-			continue
-		}
-		err = c.Visit(fmt.Sprintf("https://sukebei.nyaa.si/view/%d", i))
-		if err != nil {
-			log.Printf("Visit Error: %v\n", err)
-		}
 	}
 }
 
@@ -150,6 +97,74 @@ func view(i int, h string, td *colly.HTMLElement) error {
 		}
 	}
 	return nil
+}
+
+func ParseHTML(body *colly.HTMLElement) {
+	url := body.Request.URL.String()
+	if strings.HasSuffix(url, "/") {
+		body.ForEach("tr > td:nth-child(2) > a", func(i int, a *colly.HTMLElement) {
+			href := a.Attr("href")
+			id, err := strconv.Atoi(href[strings.Index(href, "/view/")+len("/view/"):])
+			if err != nil {
+				log.Fatalf("Atoi Error: %v\n", err)
+			}
+			for i := id; i > 0; i-- {
+				r, err := util.SIsMember(key, strconv.Itoa(i))
+				if err != nil {
+					log.Printf("SIsMember Error: %v\n", err)
+					continue
+				}
+				if r {
+					// 去重
+					continue
+				}
+				err = body.Request.Visit(fmt.Sprintf("https://sukebei.nyaa.si/view/%d", i))
+				if err != nil {
+					log.Printf("Visit Error: %v\n", err)
+				}
+			}
+		})
+	} else if strings.Contains(url, "/view/") {
+		var infoHash string
+		var id string
+		body.ForEach(".row kbd", func(i int, kbd *colly.HTMLElement) {
+			infoHash = kbd.Text
+			kbd.Request.Ctx.Put("InfoHash", infoHash)
+			url := strings.Split(kbd.Request.URL.String(), "/")
+			id = url[len(url)-1]
+			kbd.Request.Ctx.Put("ID", id)
+		})
+		// es去重
+		hit, err := util.SearchByInfoHash(infoHash)
+		if err != nil {
+			log.Printf("SearchByInfoHash Error: %v\n", err)
+			return
+		}
+		if hit > 0 {
+			_, err := util.SAdd(key, id)
+			if err != nil {
+				log.Printf("SAdd Error: %v\n", err)
+				return
+			}
+			log.Printf("ID %s added to Redis\n", id)
+			return
+		}
+		body.ForEach(".panel-footer > a", func(i int, a *colly.HTMLElement) {
+			if i == 0 {
+				err := a.Request.Visit(a.Request.AbsoluteURL(a.Attr("href")))
+				if err != nil {
+					log.Printf("Visit Error: %v\n", err)
+				}
+			}
+		})
+	}
+}
+
+func Visit(c *colly.Collector) {
+	err := c.Visit("https://sukebei.nyaa.si/")
+	if err != nil {
+		log.Fatalf("Visit Error: %v\n", err)
+	}
 }
 
 func Save(r *colly.Response) {
@@ -181,7 +196,7 @@ func Save(r *colly.Response) {
 		// redis记录ID以去重
 		defer func() {
 			id := r.Ctx.Get("ID")
-			_, err := util.SAdd(id)
+			_, err := util.SAdd(key, id)
 			if err != nil {
 				log.Printf("SAdd Error: %v\n", err)
 				return
@@ -208,7 +223,7 @@ func ErrorHandler(r *colly.Response, err error) {
 	if strings.Contains(url, "/view/") && r.StatusCode == 404 {
 		ss := strings.Split(url, "/")
 		id := ss[len(ss)-1]
-		_, e := util.SAdd(id)
+		_, e := util.SAdd(key, id)
 		if e != nil {
 			log.Printf("SAdd Error: %v\n", e)
 			return
@@ -216,3 +231,5 @@ func ErrorHandler(r *colly.Response, err error) {
 		log.Printf("ID %s added to Redis\n", id)
 	}
 }
+
+func Limit(c *colly.Collector) {}

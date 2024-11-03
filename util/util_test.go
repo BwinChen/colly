@@ -40,27 +40,3 @@ func TestDeleteByInfoHash(t *testing.T) {
 	}
 	log.Println(h)
 }
-
-func TestSAdd(t *testing.T) {
-	r, err := SAdd("4192944")
-	if err != nil {
-		return
-	}
-	log.Println(r)
-}
-
-func TestSIsMember(t *testing.T) {
-	r, err := SIsMember("4192944")
-	if err != nil {
-		log.Fatalf("Error: %v", err)
-	}
-	log.Println(r)
-}
-
-func TestSRem(t *testing.T) {
-	r, err := SRem("4192944")
-	if err != nil {
-		log.Fatalf("Error: %v", err)
-	}
-	log.Println(r)
-}
