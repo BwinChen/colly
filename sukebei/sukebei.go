@@ -102,7 +102,7 @@ func view(i int, h string, td *colly.HTMLElement) error {
 func ParseHTML(body *colly.HTMLElement) {
 	url := body.Request.URL.String()
 	if strings.HasSuffix(url, "/") {
-		body.ForEach("tr > td:nth-child(2) > a", func(i int, a *colly.HTMLElement) {
+		body.ForEach("tr:nth-child(1) > td:nth-child(2) > a", func(_ int, a *colly.HTMLElement) {
 			href := a.Attr("href")
 			id, err := strconv.Atoi(href[strings.Index(href, "/view/")+len("/view/"):])
 			if err != nil {
@@ -130,8 +130,8 @@ func ParseHTML(body *colly.HTMLElement) {
 		body.ForEach(".row kbd", func(i int, kbd *colly.HTMLElement) {
 			infoHash = kbd.Text
 			kbd.Request.Ctx.Put("InfoHash", infoHash)
-			url := strings.Split(kbd.Request.URL.String(), "/")
-			id = url[len(url)-1]
+			url := kbd.Request.URL.String()
+			id = url[strings.Index(url, "/view/")+len("/view/"):]
 			kbd.Request.Ctx.Put("ID", id)
 		})
 		// es去重
@@ -221,10 +221,9 @@ func Save(r *colly.Response) {
 func ErrorHandler(r *colly.Response, err error) {
 	url := r.Request.URL.String()
 	if strings.Contains(url, "/view/") && r.StatusCode == 404 {
-		ss := strings.Split(url, "/")
-		id := ss[len(ss)-1]
-		_, e := util.SAdd(key, id)
-		if e != nil {
+		id := url[strings.Index(url, "/view/")+len("/view/"):]
+		_, err := util.SAdd(key, id)
+		if err != nil {
 			log.Printf("SAdd Error: %v\n", e)
 			return
 		}
