@@ -16,7 +16,7 @@ func init() {
 func NewClient() {
 	rc = redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:6379", IP),
-		Password: "",
+		Password: "Bwin@0913",
 		DB:       0,
 	})
 	r, err := rc.Ping().Result()

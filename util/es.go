@@ -23,7 +23,7 @@ func init() {
 			fmt.Sprintf("http://%s:9200", IP),
 		},
 		Username: "elastic",
-		Password: "elastic",
+		Password: "Bwin@0913",
 	}
 	var err error
 	ec, err = elasticsearch.NewClient(cfg)

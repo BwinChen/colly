@@ -2,6 +2,9 @@ package util
 
 import (
 	"log"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -39,4 +42,51 @@ func TestDeleteByInfoHash(t *testing.T) {
 		log.Fatalf("Error deleting by infohash: %v", err)
 	}
 	log.Println(h)
+}
+
+func TestWalk(t *testing.T) {
+	root := "D:\\McAfee\\Desktop\\torrents"
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.Printf("WalkFunc error: %v\n", err)
+			return nil
+		}
+		if strings.EqualFold(filepath.Ext(path), ".torrent") {
+			// 删除文件
+			defer func(path string) {
+				err := os.Remove(path)
+				if err != nil {
+					log.Printf("Remove Error: %v\n", err)
+					return
+				}
+				_ = os.Remove(filepath.Dir(path))
+			}(path)
+			// 解析torrent
+			torrent, err := ParseTorrent(path)
+			if err != nil {
+				log.Printf("ParseTorrent error: %v\n", err)
+				return nil
+			}
+			// es去重
+			hit, err := SearchByInfoHash(torrent.InfoHash)
+			if err != nil {
+				log.Printf("SearchByInfoHash error: %v\n", err)
+				return nil
+			}
+			if hit > 0 {
+				return nil
+			}
+			// 索引torrent
+			id, err := IndexTorrent(torrent)
+			if err != nil {
+				log.Printf("IndexTorrent error: %v\n", err)
+				return nil
+			}
+			log.Printf("ES Torrent id: %s\n", id)
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatalf("Walk error: %v\n", err)
+	}
 }

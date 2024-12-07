@@ -224,7 +224,7 @@ func ErrorHandler(r *colly.Response, err error) {
 		id := url[strings.Index(url, "/view/")+len("/view/"):]
 		_, err := util.SAdd(key, id)
 		if err != nil {
-			log.Printf("SAdd Error: %v\n", e)
+			log.Printf("SAdd Error: %v\n", err)
 			return
 		}
 		log.Printf("ID %s added to Redis\n", id)

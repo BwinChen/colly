@@ -26,7 +26,15 @@ func ParseTorrent(path string) (*Torrent, error) {
 	}
 	var t Torrent
 	t.InfoHash = mi.HashInfoBytes().String()
-	t.CreationDate = time.Unix(mi.CreationDate, 0).Format("2006-01-02 15:04:05")
+	if mi.CreationDate > 0 {
+		t.CreationDate = time.Unix(mi.CreationDate, 0).Format("2006-01-02 15:04:05")
+	} else {
+		fileInfo, err := os.Stat(path)
+		if err != nil {
+			log.Printf("Stat error: %v", err)
+		}
+		t.CreationDate = fileInfo.ModTime().Format("2006-01-02 15:04:05")
+	}
 	var info map[string]interface{}
 	err = bencode.Unmarshal(mi.InfoBytes, &info)
 	if err != nil {
