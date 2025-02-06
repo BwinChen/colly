@@ -204,7 +204,7 @@ go build -o releases/sukebei
 #### 运行
 
 ```bash
-nohup releases/sukebei > releases/sukebei.log 2>&1 &
+TZ=Asia/Shanghai nohup releases/sukebei > releases/sukebei.log 2>&1 &
 ```
 
 #### 查看日志
