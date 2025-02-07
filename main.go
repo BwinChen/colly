@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/BwinChen/colly/sukebei"
-	"github.com/BwinChen/colly/util"
+	"github.com/BwinChen/colly/src/sukebei"
+	"github.com/BwinChen/colly/src/util"
 	"github.com/gocolly/colly/v2"
 	"log"
 	"time"

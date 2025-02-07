@@ -1,0 +1,15 @@
+[Unit]
+Description=Go Colly Application
+After=network.target
+
+[Service]
+WorkingDirectory=/home/bwin/projects/colly
+ExecStart=/bin/sh -c 'releases/sukebei > logs/sukebei.log 2>&1'
+StandardOutput=file:logs/sukebei.log
+StandardError=file:logs/sukebei.log
+Restart=on-failure
+RestartSec=10
+User=bwin
+
+[Install]
+WantedBy=multi-user.target

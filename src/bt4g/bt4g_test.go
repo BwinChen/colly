@@ -2,7 +2,7 @@ package bt4g
 
 import (
 	"fmt"
-	"github.com/BwinChen/colly/util"
+	util2 "github.com/BwinChen/colly/src/util"
 	"github.com/tebeka/selenium"
 	"github.com/tebeka/selenium/chrome"
 	"log"
@@ -30,22 +30,22 @@ func TestSelenium(t *testing.T) {
 	if err != nil {
 		log.Fatalf("SetImplicitWaitTimeout Error: %v\n", err)
 	}
-	_, err = util.Del(key)
+	_, err = util2.Del(key)
 	if err != nil {
 		log.Fatalf("Del Error: %v\n", err)
 	}
 	for {
-		lLen, err := util.LLen(key)
+		lLen, err := util2.LLen(key)
 		if err != nil {
 			log.Fatalf("LLen Error: %v\n", err)
 		}
 		if lLen == 0 {
-			_, err = util.RPush(key, "https://bt4gprx.com/new")
+			_, err = util2.RPush(key, "https://bt4gprx.com/new")
 			if err != nil {
 				log.Fatalf("RPush Error: %v\n", err)
 			}
 		}
-		next, err := util.LPop(key)
+		next, err := util2.LPop(key)
 		if err != nil {
 			log.Fatalf("LPop Error: %v\n", err)
 		}
@@ -82,9 +82,9 @@ func TestSelenium(t *testing.T) {
 					continue
 				}
 				id := href[strings.Index(href, "/magnet/")+len("/magnet/"):]
-				ok := util.SetNX(fmt.Sprintf("selenium:bt4g:id:%s", id), href, 5*time.Minute)
+				ok := util2.SetNX(fmt.Sprintf("selenium:bt4g:id:%s", id), href, 5*time.Minute)
 				if ok {
-					_, err = util.RPush(key, href)
+					_, err = util2.RPush(key, href)
 					if err != nil {
 						log.Printf("RPush Error: %v\n", err)
 					}
@@ -103,7 +103,7 @@ func TestSelenium(t *testing.T) {
 			}
 			infoHash := href[strings.Index(href, "/hash/")+len("/hash/") : strings.Index(href, "?name=")]
 			log.Printf("infoHash: %s\n", infoHash)
-			_, err = util.RPush(key, fmt.Sprintf("http://%s:8080/dht/torrent?infoHash=%s", util.IP, infoHash))
+			_, err = util2.RPush(key, fmt.Sprintf("http://%s:8080/dht/torrent?infoHash=%s", util2.IP, infoHash))
 			if err != nil {
 				log.Printf("RPush Error: %v\n", err)
 			}

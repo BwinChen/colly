@@ -2,7 +2,7 @@ package bt4g
 
 import (
 	"fmt"
-	"github.com/BwinChen/colly/util"
+	util2 "github.com/BwinChen/colly/src/util"
 	"github.com/gocolly/colly/v2"
 	"log"
 	"strings"
@@ -43,7 +43,7 @@ func ParseHTML(body *colly.HTMLElement) {
 			div.ForEach("a.text-decoration-none", func(_ int, a *colly.HTMLElement) {
 				href := a.Attr("href")
 				id := href[strings.Index(href, "/magnet/")+len("/magnet/"):]
-				ok := util.SetNX(fmt.Sprintf("colly:bt4g:%s", id), a.Attr("title"), 5*time.Minute)
+				ok := util2.SetNX(fmt.Sprintf("colly:bt4g:%s", id), a.Attr("title"), 5*time.Minute)
 				if !ok {
 					return
 				}
@@ -62,7 +62,7 @@ func ParseHTML(body *colly.HTMLElement) {
 		body.ForEach("a.btn-primary", func(i int, a *colly.HTMLElement) {
 			href := a.Attr("href")
 			infoHash := href[strings.Index(href, "/hash/")+len("/hash/") : strings.Index(href, "?name=")]
-			if err := a.Request.Visit(fmt.Sprintf("http://%s:8080/dht/torrent?infoHash=%s", util.IP, infoHash)); err != nil {
+			if err := a.Request.Visit(fmt.Sprintf("http://%s:8080/dht/torrent?infoHash=%s", util2.IP, infoHash)); err != nil {
 				log.Printf("Visit Error: %v\n", err)
 			}
 		})

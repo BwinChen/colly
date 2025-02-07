@@ -2,7 +2,7 @@ package sukebei
 
 import (
 	"fmt"
-	"github.com/BwinChen/colly/util"
+	"github.com/BwinChen/colly/src/util"
 	"github.com/gocolly/colly/v2"
 	"log"
 	"os"

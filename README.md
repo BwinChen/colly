@@ -204,13 +204,13 @@ go build -o releases/sukebei
 #### 运行
 
 ```bash
-TZ=Asia/Shanghai nohup releases/sukebei > releases/sukebei.log 2>&1 &
+nohup releases/sukebei > logs/sukebei.log 2>&1 &
 ```
 
 #### 查看日志
 
 ```bash
-tail -f releases/sukebei.log
+tail -f logs/sukebei.log
 ```
 
 #### 查看进程
