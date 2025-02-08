@@ -195,25 +195,25 @@ elasticdump --input=magnet.json --output=http://localhost:9200/magnet --type=dat
 
 ### 运维
 
-#### 编译
+* 编译
 
 ```bash
-go build -o releases/sukebei
+go build -o releases/sukebei src/main.go
 ```
 
-#### 运行
+* 运行
 
 ```bash
 nohup releases/sukebei > logs/sukebei.log 2>&1 &
 ```
 
-#### 查看日志
+* 查看日志
 
 ```bash
 tail -f logs/sukebei.log
 ```
 
-#### 查看进程
+* 查看进程
 
 ```bash
 ps aux | grep releases/sukebei

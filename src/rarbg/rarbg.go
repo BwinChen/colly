@@ -1,8 +1,8 @@
 package rarbg
 
 import (
-	"colly/util"
 	"fmt"
+	"github.com/BwinChen/colly/src/util"
 	"github.com/gocolly/colly/v2"
 	"log"
 	"os"

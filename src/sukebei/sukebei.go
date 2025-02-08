@@ -116,6 +116,7 @@ func ParseHTML(body *colly.HTMLElement) {
 				}
 				if r {
 					// 去重
+					log.Printf("duplicate ID %d\n", i)
 					continue
 				}
 				err = body.Request.Visit(fmt.Sprintf("https://sukebei.nyaa.si/view/%d", i))
