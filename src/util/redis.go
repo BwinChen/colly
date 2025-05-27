@@ -34,6 +34,15 @@ func SAdd(key, id string) (int64, error) {
 	return r, nil
 }
 
+func SRandMember(key string) string {
+	s, err := rc.SRandMember(key).Result()
+	if err != nil {
+		log.Printf("SRandMember Error: %v\n", err)
+		return ""
+	}
+	return s
+}
+
 func SIsMember(key, m string) (bool, error) {
 	r, err := rc.SIsMember(key, m).Result()
 	if err != nil {
@@ -42,12 +51,13 @@ func SIsMember(key, m string) (bool, error) {
 	return r, nil
 }
 
-func SRem(key, m string) (int64, error) {
+func SRem(key, m string) int64 {
 	r, err := rc.SRem(key, m).Result()
 	if err != nil {
-		return 0, err
+		log.Printf("SRem Error: %v\n", err)
+		return -1
 	}
-	return r, err
+	return r
 }
 
 func SetNX(key string, value interface{}, expiration time.Duration) bool {

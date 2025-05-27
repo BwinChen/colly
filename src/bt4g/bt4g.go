@@ -10,9 +10,8 @@ import (
 	"time"
 )
 
-var Cookie = "ge_js_validator_28=1730522647@28@b4e9ac25624c8970a90e01a008c04d86"
+var Cookie = ""
 var startURL = "https://bt4gprx.com/new"
-var splashURL = "http://192.168.1.60:8050/render.html"
 
 func Limit(c *colly.Collector) {
 	//err := c.Limit(&colly.LimitRule{
@@ -46,7 +45,7 @@ func ParseHTML(body *colly.HTMLElement) {
 			div.ForEach("a.text-decoration-none", func(_ int, a *colly.HTMLElement) {
 				href := a.Attr("href")
 				id := href[strings.Index(href, "/magnet/")+len("/magnet/"):]
-				ok := util.SetNX(fmt.Sprintf("colly:bt4g:%s", id), a.Attr("title"), 5*time.Minute)
+				ok := util.SetNX(fmt.Sprintf("colly:bt4g:%s", id), a.Attr("title"), 1*time.Minute)
 				if !ok {
 					return
 				}
@@ -65,7 +64,7 @@ func ParseHTML(body *colly.HTMLElement) {
 		body.ForEach("a.btn-primary", func(i int, a *colly.HTMLElement) {
 			href := a.Attr("href")
 			infoHash := href[strings.Index(href, "/hash/")+len("/hash/") : strings.Index(href, "?name=")]
-			if err := a.Request.Visit(fmt.Sprintf("http://%s:8080/dht/torrent?infoHash=%s", util.IP, infoHash)); err != nil {
+			if err := a.Request.Visit(fmt.Sprintf("%s?infoHashes=%s", util.DhtTorrentURL, infoHash)); err != nil {
 				log.Printf("Visit Error: %v\n", err)
 			}
 		})
@@ -77,22 +76,22 @@ func Save(r *colly.Response) {}
 func ErrorHandler(r *colly.Response, err error) {}
 
 func buildSplashURL(u string) string {
-	wait := "5.0"
+	wait := "1.5"
 	timeout := "90.0"
 	luaScript := `
-function main(splash, args)
-  splash:set_user_agent("Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko")
-  assert(splash:go(args.url))
-  assert(splash:wait(5))
-  return {
-    html = splash:html(),
-    png = splash:png(),
-    har = splash:har(),
-  }
-end
-`
+		function main(splash, args)
+		  splash:set_user_agent("Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko")
+		  assert(splash:go(args.url))
+		  assert(splash:wait(1.5))
+		  return {
+			html = splash:html(),
+			png = splash:png(),
+			har = splash:har(),
+		  }
+		end
+	`
 	return fmt.Sprintf("%s?wait=%s&images=1&timeout=%s&url=%s&lua_source=%s",
-		splashURL, wait, timeout, url.QueryEscape(u), url.QueryEscape(luaScript))
+		util.SplashURL, wait, timeout, url.QueryEscape(u), url.QueryEscape(luaScript))
 }
 
 func buildAbsoluteURL(u string) string {

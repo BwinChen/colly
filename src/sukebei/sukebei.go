@@ -126,8 +126,7 @@ func ParseHTML(body *colly.HTMLElement) {
 			}
 		})
 	} else if strings.Contains(url, "/view/") {
-		var infoHash string
-		var id string
+		var infoHash, id string
 		body.ForEach(".row kbd", func(i int, kbd *colly.HTMLElement) {
 			infoHash = kbd.Text
 			kbd.Request.Ctx.Put("InfoHash", infoHash)
@@ -152,9 +151,24 @@ func ParseHTML(body *colly.HTMLElement) {
 		}
 		body.ForEach(".panel-footer > a", func(i int, a *colly.HTMLElement) {
 			if i == 0 {
-				err := a.Request.Visit(a.Request.AbsoluteURL(a.Attr("href")))
-				if err != nil {
-					log.Printf("Visit Error: %v\n", err)
+				href := a.Attr("href")
+				if strings.HasPrefix(href, "magnet:?xt=urn:btih:") {
+					err := a.Request.Visit(fmt.Sprintf("%s?infoHashes=%s", util.DhtTorrentURL, infoHash))
+					if err != nil {
+						log.Printf("Visit Error: %v\n", err)
+						return
+					}
+					_, err = util.SAdd(key, id)
+					if err != nil {
+						log.Printf("SAdd Error: %v\n", err)
+						return
+					}
+					log.Printf("ID %s added to Redis\n", id)
+				} else {
+					err := a.Request.Visit(a.Request.AbsoluteURL(href))
+					if err != nil {
+						log.Printf("Visit Error: %v\n", err)
+					}
 				}
 			}
 		})

@@ -1,0 +1,15 @@
+[Unit]
+Description=Go Colly Application
+After=network.target
+
+[Service]
+WorkingDirectory=/home/bwin/projects/go/colly
+ExecStart=/bin/sh -c 'releases/bt4g > logs/bt4g.log 2>&1'
+StandardOutput=file:logs/bt4g.log
+StandardError=file:logs/bt4g.log
+Restart=always
+RestartSec=10
+User=bwin
+
+[Install]
+WantedBy=multi-user.target
