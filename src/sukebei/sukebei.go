@@ -141,9 +141,8 @@ func ParseHTML(body *colly.HTMLElement) {
 			return
 		}
 		if hit > 0 {
-			_, err := util.SAdd(key, id)
-			if err != nil {
-				log.Printf("SAdd Error: %v\n", err)
+			r := util.SAdd(key, id)
+			if r == -1 {
 				return
 			}
 			log.Printf("ID %s added to Redis\n", id)
@@ -158,9 +157,8 @@ func ParseHTML(body *colly.HTMLElement) {
 						log.Printf("Visit Error: %v\n", err)
 						return
 					}
-					_, err = util.SAdd(key, id)
-					if err != nil {
-						log.Printf("SAdd Error: %v\n", err)
+					r := util.SAdd(key, id)
+					if r == -1 {
 						return
 					}
 					log.Printf("ID %s added to Redis\n", id)
@@ -211,9 +209,8 @@ func Save(r *colly.Response) {
 		// redis记录ID以去重
 		defer func() {
 			id := r.Ctx.Get("ID")
-			_, err := util.SAdd(key, id)
-			if err != nil {
-				log.Printf("SAdd Error: %v\n", err)
+			r := util.SAdd(key, id)
+			if r == -1 {
 				return
 			}
 			log.Printf("ID %s added to Redis\n", id)
@@ -237,9 +234,8 @@ func ErrorHandler(r *colly.Response, err error) {
 	url := r.Request.URL.String()
 	if strings.Contains(url, "/view/") && r.StatusCode == 404 {
 		id := url[strings.Index(url, "/view/")+len("/view/"):]
-		_, err := util.SAdd(key, id)
-		if err != nil {
-			log.Printf("SAdd Error: %v\n", err)
+		r := util.SAdd(key, id)
+		if r == -1 {
 			return
 		}
 		log.Printf("ID %s added to Redis\n", id)

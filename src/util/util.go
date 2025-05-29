@@ -3,6 +3,7 @@ package util
 import (
 	"errors"
 	"log"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -48,4 +49,9 @@ func ConvertSize(s string) (int64, error) {
 
 func InfoHash(magnet string) string {
 	return magnet[strings.Index(magnet, "btih:")+5 : strings.Index(magnet, "&dn=")]
+}
+
+// RandomInt 生成 [min, max] 之间的随机整数
+func RandomInt(min, max int) int {
+	return min + rand.Intn(max-min+1)
 }

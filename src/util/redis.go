@@ -26,21 +26,22 @@ func NewClient() {
 	log.Println("Pong:", r)
 }
 
-func SAdd(key, id string) (int64, error) {
-	r, err := rc.SAdd(key, id).Result()
+func SAdd(k, m string) int64 {
+	r, err := rc.SAdd(k, m).Result()
 	if err != nil {
-		return 0, err
+		log.Printf("SAdd Error: %v\n", err)
+		return -1
 	}
-	return r, nil
+	return r
 }
 
-func SRandMember(key string) string {
-	s, err := rc.SRandMember(key).Result()
+func SPop(key string) string {
+	r, err := rc.SPop(key).Result()
 	if err != nil {
-		log.Printf("SRandMember Error: %v\n", err)
+		log.Printf("SPop Error: %v\n", err)
 		return ""
 	}
-	return s
+	return r
 }
 
 func SIsMember(key, m string) (bool, error) {
@@ -49,15 +50,6 @@ func SIsMember(key, m string) (bool, error) {
 		return false, err
 	}
 	return r, nil
-}
-
-func SRem(key, m string) int64 {
-	r, err := rc.SRem(key, m).Result()
-	if err != nil {
-		log.Printf("SRem Error: %v\n", err)
-		return -1
-	}
-	return r
 }
 
 func SetNX(key string, value interface{}, expiration time.Duration) bool {

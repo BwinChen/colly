@@ -1,10 +1,9 @@
 package main
 
 import (
-	"github.com/BwinChen/colly/src/sukebei"
+	"github.com/BwinChen/colly/src/bt4g"
 	"github.com/BwinChen/colly/src/util"
 	"github.com/gocolly/colly/v2"
-	"log"
 	"time"
 )
 
@@ -24,22 +23,22 @@ func main() {
 	// 设置Request Header
 	c.OnRequest(func(r *colly.Request) {
 		r.Headers.Set("User-Agent", util.UserAgent)
-		r.Headers.Set("Cookie", sukebei.Cookie)
-		log.Println("Visiting:", r.URL)
+		r.Headers.Set("Cookie", bt4g.Cookie)
+		//log.Println("Visiting:", r.URL)
 	})
 
 	// 限制速率
-	sukebei.Limit(c)
+	bt4g.Limit(c)
 
 	// 处理错误
-	c.OnError(sukebei.ErrorHandler)
+	c.OnError(bt4g.ErrorHandler)
 
 	// 处理响应
-	c.OnResponse(sukebei.Save)
+	c.OnResponse(bt4g.Save)
 
 	// 解析HTML
-	c.OnHTML("body", sukebei.ParseHTML)
+	c.OnHTML("body", bt4g.ParseHTML)
 
 	// 开始爬取
-	sukebei.Visit(c)
+	bt4g.Visit(c)
 }
