@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	UserAgent     = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0"
-	IP            = "192.168.0.10"
-	SplashURL     = "http://127.0.0.1:8050/render.html"
-	DhtTorrentURL = "http://127.0.0.1:8080/dht/torrent"
+	UserAgent       = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0"
+	ElasticsearchIP = "192.168.0.10"
+	RedisIP         = "192.168.0.10"
+	SplashURL       = "http://127.0.0.1:8050/render.html"
+	DhtTorrentURL   = "http://127.0.0.1:8080/dht/torrent"
 )
 
 func Deadline(duration string) int64 {

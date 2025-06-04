@@ -16,7 +16,7 @@ var deadline = util.Deadline(fmt.Sprintf("-%dh", 24*365))
 var page = 1
 var Cookie = ""
 
-const key = "colly:sukebei:ids"
+const idsKey = "colly:sukebei:ids"
 
 func ParseList(b *colly.HTMLElement) {
 	b.ForEach("tr", func(i int, tr *colly.HTMLElement) {
@@ -109,7 +109,7 @@ func ParseHTML(body *colly.HTMLElement) {
 				log.Fatalf("Atoi Error: %v\n", err)
 			}
 			for i := id; i > 0; i-- {
-				r, err := util.SIsMember(key, strconv.Itoa(i))
+				r, err := util.SIsMember(idsKey, strconv.Itoa(i))
 				if err != nil {
 					log.Printf("SIsMember Error: %v\n", err)
 					continue
@@ -141,7 +141,7 @@ func ParseHTML(body *colly.HTMLElement) {
 			return
 		}
 		if hit > 0 {
-			r := util.SAdd(key, id)
+			r := util.SAdd(idsKey, id)
 			if r == -1 {
 				return
 			}
@@ -157,7 +157,7 @@ func ParseHTML(body *colly.HTMLElement) {
 						log.Printf("Visit Error: %v\n", err)
 						return
 					}
-					r := util.SAdd(key, id)
+					r := util.SAdd(idsKey, id)
 					if r == -1 {
 						return
 					}
@@ -209,7 +209,7 @@ func Save(r *colly.Response) {
 		// redis记录ID以去重
 		defer func() {
 			id := r.Ctx.Get("ID")
-			r := util.SAdd(key, id)
+			r := util.SAdd(idsKey, id)
 			if r == -1 {
 				return
 			}
@@ -234,7 +234,7 @@ func ErrorHandler(r *colly.Response, err error) {
 	url := r.Request.URL.String()
 	if strings.Contains(url, "/view/") && r.StatusCode == 404 {
 		id := url[strings.Index(url, "/view/")+len("/view/"):]
-		r := util.SAdd(key, id)
+		r := util.SAdd(idsKey, id)
 		if r == -1 {
 			return
 		}

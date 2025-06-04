@@ -15,7 +15,7 @@ func init() {
 
 func NewClient() {
 	rc = redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:6379", IP),
+		Addr:     fmt.Sprintf("%s:6379", RedisIP),
 		Password: "Bwin@0913",
 		DB:       0,
 	})
